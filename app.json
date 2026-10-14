@@ -12,24 +12,47 @@
       "bundleIdentifier": "app.pandago",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "PandaGO! usa el micrófono para evaluar tu pronunciación del chino."
-      }
+      },
+      "icon": "./assets/icon.png"
     },
     "android": {
       "package": "app.pandago",
       "permissions": [
         "RECORD_AUDIO"
-      ]
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFE7DA"
+      },
+      "edgeToEdgeEnabled": true
     },
     "plugins": [
       "expo-router",
       "expo-audio",
-      "expo-splash-screen"
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFE7DA",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#11141C"
+          }
+        }
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "apiUrl": "http://localhost:8787"
+    },
+    "icon": "./assets/icon.png",
+    "web": {
+      "favicon": "./assets/favicon.png"
     }
   }
 }

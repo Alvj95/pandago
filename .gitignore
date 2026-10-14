@@ -11,3 +11,5 @@ android/
 *.key
 *.mobileprovision
 .env*.local
+android/
+.icon-concepts/

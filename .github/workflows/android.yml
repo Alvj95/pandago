@@ -1,0 +1,74 @@
+# Compila el APK de Android en cada push a main y lo publica como Release de GitHub.
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write # publicar el APK como Release
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    env:
+      # Cada compilación sube el versionCode: el APK nuevo se instala encima del anterior.
+      ANDROID_VERSION_CODE: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+      # Genera el proyecto nativo android/ a partir de app.json (no se versiona).
+      - run: npx expo prebuild --platform android --no-install
+
+      # Release = JS empaquetado dentro del APK (funciona sin ordenador ni Metro).
+      # La plantilla de Expo lo firma con su keystore fija de depuración, así que las
+      # actualizaciones se instalan encima. Para Google Play hará falta una keystore propia.
+      - name: Assemble release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Package APK
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk PandaGO.apk
+          # Algunos navegadores bloquean descargas .apk; el zip pasa.
+          zip -j PandaGO-apk.zip PandaGO.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pandago-apk
+          path: PandaGO.apk
+          if-no-files-found: error
+
+      - name: Publish release with APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.${{ github.run_number }}
+          name: PandaGO! v0.1.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          files: |
+            PandaGO.apk
+            PandaGO-apk.zip
+          body: |
+            APK de Android de PandaGO! 🐼
+
+            **Instalar:** abre esta página desde el móvil, descarga `PandaGO.apk`, ábrelo y permite "instalar apps de origen desconocido".
+            Si el navegador bloquea el .apk, descarga `PandaGO-apk.zip`, descomprímelo y abre el .apk de dentro.
