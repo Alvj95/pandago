@@ -38,7 +38,9 @@ export type ChatAction =
   | { type: 'tutor_reply'; turn: TutorTurn }
   | { type: 'record_start' }
   | { type: 'record_stop' }
-  | { type: 'fail'; message: string };
+  | { type: 'fail'; message: string }
+  /** Aviso informativo en el chat que no interrumpe la conversación. */
+  | { type: 'notice'; text: string };
 
 let seq = 0;
 const id = () => `m${Date.now().toString(36)}${(seq++).toString(36)}`;
@@ -73,7 +75,8 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
 
     case 'tutor_reply': {
       const { turn } = action;
-      const turns = state.turns + (state.messages.length ? 1 : 0);
+      const hasUserTurn = state.messages.some((m) => m.from === 'user');
+      const turns = state.turns + (hasUserTurn ? 1 : 0);
       const finished = turn.scenario_complete || turns >= state.scenario.max_turns;
       const struggle = turn.task_score < 0.5 ? state.struggle + 1 : 0;
       return {
@@ -84,7 +87,7 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         mood: finished ? 'celebrate' : turn.bao_mood,
         turns,
         struggle,
-        xpEarned: state.xpEarned + (state.messages.length ? xpForTurn(turn) : 0) + (finished ? 10 : 0),
+        xpEarned: state.xpEarned + (hasUserTurn ? xpForTurn(turn) : 0) + (finished ? 10 : 0),
       };
     }
 
@@ -101,6 +104,9 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         mood: 'encourage',
         messages: [...state.messages, { id: id(), from: 'system', text: action.message }],
       };
+
+    case 'notice':
+      return { ...state, messages: [...state.messages, { id: id(), from: 'system', text: action.text }] };
   }
 }
 

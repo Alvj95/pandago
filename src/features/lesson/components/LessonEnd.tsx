@@ -17,7 +17,7 @@ function Stat({ label, value, color, index }: { label: string; value: string; co
   );
 }
 
-export function LessonComplete({ summary, onContinue }: { summary: LessonSummary; onContinue: () => void }) {
+export function LessonComplete({ summary, bonusGems = 0, onContinue }: { summary: LessonSummary; bonusGems?: number; onContinue: () => void }) {
   const { c, type, spacing } = useTheme();
   const mins = Math.floor(summary.seconds / 60);
   const secs = String(summary.seconds % 60).padStart(2, '0');
@@ -26,8 +26,13 @@ export function LessonComplete({ summary, onContinue }: { summary: LessonSummary
       <View style={[styles.center, { gap: spacing.md }]}>
         <Bao mood="celebrate" size={140} />
         <Animated.Text entering={ZoomIn.delay(200).springify()} style={[type.display, { color: c.xpText, textAlign: 'center' }]}>
-          {summary.perfect ? '¡Lección perfecta!' : '¡Lección completada!'}
+          {bonusGems ? '¡Desafío superado!' : summary.perfect ? '¡Lección perfecta!' : '¡Lección completada!'}
         </Animated.Text>
+        {bonusGems > 0 && (
+          <Animated.Text entering={ZoomIn.delay(450).springify()} style={[type.title, { color: c.info }]}>
+            🏆 +{bonusGems} 💎
+          </Animated.Text>
+        )}
       </View>
       <View style={[styles.row, { gap: spacing.sm }]}>
         <Stat index={1} label="XP" value={`+${summary.xp}`} color={c.xp} />

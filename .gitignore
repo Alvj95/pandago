@@ -13,3 +13,5 @@ android/
 .env*.local
 android/
 .icon-concepts/
+scripts/course/.cache/
+__pycache__/

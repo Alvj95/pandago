@@ -8,6 +8,7 @@ import { levelDifficulty } from '@/features/learning/adaptive/learnerModel';
 import type { HskLevel, LessonNode } from '@/data/hsk/types';
 import { feedback } from '@/lib/haptics';
 import { useLearnerStore } from '@/store/useLearnerStore';
+import { BOSS_GEMS } from '@/features/rewards/chest';
 import { MAX_HEARTS, useProgressStore } from '@/store/useProgressStore';
 import { useTheme } from '@/theme';
 import { FeedbackBanner } from './components/FeedbackBanner';
@@ -64,6 +65,7 @@ export function LessonScreen({ exercises, node, level, costsHearts = true }: Pro
     rewarded.current = true;
     progress.awardXp(summary.xp);
     if (node) progress.completeNode(node);
+    if (node?.kind === 'boss') progress.earnGems(BOSS_GEMS);
     void feedback.levelUp();
   }, [summary, node, progress]);
 
@@ -89,7 +91,7 @@ export function LessonScreen({ exercises, node, level, costsHearts = true }: Pro
   if (summary) {
     return (
       <SafeAreaView style={[styles.flex, { backgroundColor: c.background }]}>
-        <LessonComplete summary={summary} onContinue={() => exitTo(router)} />
+        <LessonComplete summary={summary} bonusGems={node?.kind === 'boss' ? BOSS_GEMS : 0} onContinue={() => exitTo(router)} />
       </SafeAreaView>
     );
   }

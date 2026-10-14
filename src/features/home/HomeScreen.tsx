@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BaoBubble } from '@/components/mascot';
-import { HSK1_UNITS } from '@/data/hsk/hsk1.sample';
+import { UNITS } from '@/data/hsk/course';
 import type { LessonNode } from '@/data/hsk/types';
 import { feedback } from '@/lib/haptics';
 import { dueItems } from '@/features/learning/adaptive/srs';
@@ -27,7 +27,7 @@ export function HomeScreen() {
   const { c, spacing } = useTheme();
   const router = useRouter();
   const tick = useProgressStore((s) => s.tick);
-  const openChest = useProgressStore((s) => s.openChest);
+  const pendingChests = useProgressStore((s) => s.pendingChests);
   const [showTip, setShowTip] = useState(true);
   const learner = useLearnerStore((s) => s.model);
   const [now] = useState(() => Date.now());
@@ -39,14 +39,13 @@ export function HomeScreen() {
   const openNode = (node: LessonNode) => {
     void feedback.tap();
     if (node.kind === 'conversation') router.push({ pathname: '/chat', params: { nodeId: node.id } });
+    else if (node.kind === 'chest') router.push({ pathname: '/chest/[id]', params: { id: node.id } });
     else router.push({ pathname: '/lesson/[id]', params: { id: node.id } });
   };
 
+  // Cofre de la meta diaria (los del camino se abren desde su nodo).
   const handleChest = () => {
-    const reward = openChest();
-    if (!reward) return;
-    void feedback.levelUp();
-    Alert.alert('🎁 ¡Cofre abierto!', `+${reward.gems} 💎${reward.xpBoostMinutes ? ` y XP doble durante ${reward.xpBoostMinutes} min` : ''}`);
+    if (pendingChests > 0) router.push({ pathname: '/chest/[id]', params: { id: 'daily' } });
   };
 
   return (
@@ -64,7 +63,7 @@ export function HomeScreen() {
             <BaoBubble {...TIP} mood="talking" />
           </View>
         )}
-        <LearningPath units={HSK1_UNITS} onOpenNode={openNode} />
+        <LearningPath units={UNITS} onOpenNode={openNode} />
       </ScrollView>
     </SafeAreaView>
   );

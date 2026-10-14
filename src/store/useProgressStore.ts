@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { HskLevel, LessonNode } from '@/data/hsk/types';
+import { MAX_FREEZES, type ChestReward } from '@/features/rewards/chest';
 import type { League } from '@/features/leagues/leaderboard';
 
 export const MAX_HEARTS = 5;
@@ -33,7 +34,10 @@ export interface ProgressState {
   /** Devuelve false si no hay gemas suficientes. */
   spendGems: (amount: number) => boolean;
   completeNode: (node: LessonNode) => void;
-  openChest: () => { gems: number; xpBoostMinutes: number } | null;
+  /** Abre un cofre pendiente (p.ej. el de la meta diaria); devuelve false si no hay. */
+  consumePendingChest: () => boolean;
+  claimReward: (reward: ChestReward) => void;
+  earnGems: (amount: number) => void;
   /** Llamar al abrir la app: regenera vidas y rompe/conserva la racha. */
   tick: (now?: number) => void;
 }
@@ -62,7 +66,11 @@ export const useProgressStore = create<ProgressState>()(
         const today = dayKey(Date.now());
         const s = get();
         const firstActivityToday = s.lastActiveDay !== today;
+        const before = firstActivityToday ? 0 : s.xpToday;
+        // Cumplir la meta diaria por primera vez hoy regala un cofre.
+        const reachedGoal = before < s.dailyGoalXp && before + amount >= s.dailyGoalXp;
         set({
+          pendingChests: s.pendingChests + (reachedGoal ? 1 : 0),
           xpTotal: s.xpTotal + amount,
           xpToday: (firstActivityToday ? 0 : s.xpToday) + amount,
           leagueWeeklyXp: s.leagueWeeklyXp + amount,
@@ -87,21 +95,22 @@ export const useProgressStore = create<ProgressState>()(
       completeNode: (node) =>
         set((s) => {
           if (s.completedNodeIds.includes(node.id)) return s;
-          return {
-            completedNodeIds: [...s.completedNodeIds, node.id],
-            pendingChests: s.pendingChests + (node.kind === 'chest' ? 1 : 0),
-          };
+          return { completedNodeIds: [...s.completedNodeIds, node.id] };
         }),
 
-      openChest: () => {
-        const s = get();
-        if (s.pendingChests === 0) return null;
-        // Recompensa variable (refuerzo intermitente), con suelo garantizado.
-        const roll = Math.random();
-        const reward = roll > 0.9 ? { gems: 50, xpBoostMinutes: 15 } : roll > 0.6 ? { gems: 25, xpBoostMinutes: 0 } : { gems: 10, xpBoostMinutes: 0 };
-        set({ pendingChests: s.pendingChests - 1, gems: s.gems + reward.gems });
-        return reward;
+      consumePendingChest: () => {
+        if (get().pendingChests === 0) return false;
+        set((s) => ({ pendingChests: s.pendingChests - 1 }));
+        return true;
       },
+
+      claimReward: (reward) =>
+        set((s) => ({
+          gems: s.gems + reward.gems,
+          streakFreezes: Math.min(MAX_FREEZES, s.streakFreezes + (reward.freeze ? 1 : 0)),
+        })),
+
+      earnGems: (amount) => set((s) => ({ gems: s.gems + amount })),
 
       tick: (now = Date.now()) => {
         const s = get();

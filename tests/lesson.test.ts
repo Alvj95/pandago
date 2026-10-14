@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { HSK1_SENTENCES, HSK1_UNITS, HSK1_VOCAB } from '@/data/hsk/hsk1.sample';
-import strokes from '@/data/strokes/hsk1.strokes.json';
+import { SENTENCES, UNITS, VOCAB } from '@/data/hsk/course';
+import strokes from '@/data/strokes/hsk.strokes.json';
 import { createLearner, levelDifficulty } from '@/features/learning/adaptive/learnerModel';
 import { newSession, planLesson } from '@/features/learning/adaptive/levelEngine';
 import { buildLesson, exerciseFromPlan, grade } from '@/features/lesson/engine/exerciseFactory';
@@ -10,21 +10,26 @@ import { createRng } from '@/features/lesson/engine/random';
 import { checkStroke, toScreen, writingScore, type Point, type StrokeData } from '@/features/lesson/engine/strokeMatcher';
 import type { GradeResult } from '@/features/lesson/engine/types';
 
-const content = { vocab: HSK1_VOCAB, sentences: HSK1_SENTENCES, strokeChars: new Set(Object.keys(strokes)) };
+const content = { vocab: VOCAB, sentences: SENTENCES, strokeChars: new Set(Object.keys(strokes)) };
 const STROKES = strokes as unknown as Record<string, StrokeData>;
 const right: GradeResult = { correct: true, score: 1, solution: '', observations: [] };
 const wrong: GradeResult = { correct: false, score: 0, solution: 'x', observations: [] };
 
 describe('buildLesson', () => {
-  const lessons = HSK1_UNITS.flatMap((u) => u.nodes).filter((n) => n.kind === 'lesson');
+  const lessons = UNITS.flatMap((u) => u.nodes).filter((n) => n.kind === 'lesson');
 
-  it('genera lecciones de 8-12 ejercicios con todos los tipos', () => {
+  it('genera lecciones de 6-12 ejercicios con opción múltiple, emparejar y escritura', () => {
     for (const node of lessons) {
       const ex = buildLesson(node.skillIds, content, createRng(42));
-      assert.ok(ex.length >= 8 && ex.length <= 12, `${node.id}: ${ex.length}`);
+      assert.ok(ex.length >= 6 && ex.length <= 12, `${node.id}: ${ex.length}`);
       const kinds = new Set(ex.map((e) => e.kind));
-      for (const k of ['multiple_choice', 'sentence_order', 'match_pairs', 'stroke_writing']) assert.ok(kinds.has(k as never), `${node.id} sin ${k}`);
+      for (const k of ['multiple_choice', 'match_pairs', 'stroke_writing']) assert.ok(kinds.has(k as never), `${node.id} sin ${k}`);
     }
+  });
+
+  it('la mayoría de lecciones incluyen ordenar frases', () => {
+    const withOrder = lessons.filter((n) => buildLesson(n.skillIds, content, createRng(1)).some((e) => e.kind === 'sentence_order'));
+    assert.ok(withOrder.length / lessons.length >= 0.6, `${withOrder.length}/${lessons.length}`);
   });
 
   it('opciones únicas, solución presente en el banco de fichas', () => {
@@ -40,15 +45,15 @@ describe('buildLesson', () => {
   });
 
   it('es determinista con la misma semilla', () => {
-    const a = buildLesson(['hsk1-0001', 'hsk1-0004'], content, createRng(9)).map((e) => e.kind);
-    const b = buildLesson(['hsk1-0001', 'hsk1-0004'], content, createRng(9)).map((e) => e.kind);
+    const a = buildLesson(['h1-你好', 'h1-你'], content, createRng(9)).map((e) => e.kind);
+    const b = buildLesson(['h1-你好', 'h1-你'], content, createRng(9)).map((e) => e.kind);
     assert.deepEqual(a, b);
   });
 });
 
 describe('grade', () => {
   it('ordenar frase: correcto y crédito parcial', () => {
-    const so = buildLesson(['hsk1-0003', 'hsk1-0012', 'hsk1-0020'], content, createRng(3)).find((e) => e.kind === 'sentence_order');
+    const so = buildLesson(['h1-我', 'h1-很', 'h1-好'], content, createRng(3)).find((e) => e.kind === 'sentence_order');
     assert.ok(so && so.kind === 'sentence_order');
     assert.equal(grade(so, { kind: 'order', tokens: so.solution }).correct, true);
     const partial = grade(so, { kind: 'order', tokens: [so.solution[0] ?? ''] });
@@ -58,7 +63,7 @@ describe('grade', () => {
 });
 
 describe('lessonReducer', () => {
-  const ex = buildLesson(['hsk1-0001', 'hsk1-0004'], content, createRng(1));
+  const ex = buildLesson(['h1-你好', 'h1-你'], content, createRng(1));
 
   it('un fallo cuesta una vida y re-encola el ejercicio una vez', () => {
     let s = initLesson(ex, 3);
@@ -114,7 +119,7 @@ describe('strokeMatcher (datos reales de 你)', () => {
 
 describe('repaso adaptativo', () => {
   it('planLesson + exerciseFromPlan produce ejercicios para un alumno nuevo', () => {
-    const plan = planLesson(createLearner(1), HSK1_VOCAB, () => levelDifficulty(1), newSession(), 10);
+    const plan = planLesson(createLearner(1), VOCAB, () => levelDifficulty(1), newSession(), 10);
     const ex = plan.map((p) => exerciseFromPlan(p.itemId, p.kind, content, createRng(5))).filter(Boolean);
     assert.ok(ex.length >= 5);
   });

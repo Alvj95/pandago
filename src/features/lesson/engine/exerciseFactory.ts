@@ -2,8 +2,7 @@
  * Generador de ejercicios a partir del contenido HSK. Puro y determinista
  * (recibe un RNG), así que se prueba sin UI.
  */
-import type { SampleSentence } from '@/data/hsk/hsk1.sample';
-import type { ExerciseKind as PlannedKind, VocabItem } from '@/data/hsk/types';
+import type { ExerciseKind as PlannedKind, SampleSentence, VocabItem } from '@/data/hsk/types';
 import { sample, shuffle, type Rng } from './random';
 import type { Answer, Exercise, GradeResult } from './types';
 
@@ -14,12 +13,33 @@ export interface Content {
   strokeChars: Set<string>;
 }
 
+/**
+ * Frases para practicar un conjunto de palabras: solo las que no contienen
+ * vocabulario de un nivel superior, ordenadas por cuánto de la frase cubren
+ * esas palabras (las de la propia unidad salen primero de forma natural).
+ */
+export function pickSentences(skillIds: string[], content: Content, n: number, rng: Rng, unitId?: string): SampleSentence[] {
+  const skills = new Set(skillIds);
+  const levelOf = new Map(content.vocab.map((v) => [v.id, v.level]));
+  const maxLevel = Math.max(1, ...skillIds.map((id) => levelOf.get(id) ?? 1));
+  const scored = content.sentences
+    .filter((s) => s.itemIds.some((id) => skills.has(id)) && s.itemIds.every((id) => (levelOf.get(id) ?? 1) <= maxLevel))
+    .map((s) => ({
+      s,
+      own: unitId && s.id.startsWith(`${unitId}-`) ? 1 : 0,
+      coverage: s.itemIds.filter((id) => skills.has(id)).length / s.itemIds.length,
+      tie: rng(),
+    }));
+  return scored.sort((a, b) => b.own - a.own || b.coverage - a.coverage || a.tie - b.tie).slice(0, n).map((x) => x.s);
+}
+
 let counter = 0;
 const nextId = (kind: string) => `${kind}-${(counter++).toString(36)}`;
 
 function distractors(item: VocabItem, pool: VocabItem[], n: number, rng: Rng): VocabItem[] {
-  // Preferimos distractores de la misma longitud (en hanzi) para que no se adivine por la forma.
-  const others = pool.filter((v) => v.id !== item.id && v.meaning !== item.meaning);
+  // Distractores del mismo nivel o inferior (no palabras que el alumno aún no ha visto en otro nivel)
+  // y de la misma longitud en hanzi, para que no se adivine por la forma.
+  const others = pool.filter((v) => v.id !== item.id && v.meaning !== item.meaning && v.hanzi !== item.hanzi && v.level <= item.level);
   const sameLength = others.filter((v) => v.hanzi.length === item.hanzi.length);
   const picked = sample(sameLength, n, rng);
   return picked.length >= n ? picked : [...picked, ...sample(others.filter((v) => !picked.includes(v)), n - picked.length, rng)];
@@ -84,7 +104,7 @@ export function strokeWriting(item: VocabItem, char: string): Exercise {
  * reconocer (hanzi→significado) → recordar (significado→hanzi) → oír →
  * producir (ordenar frases, escribir) → consolidar (emparejar).
  */
-export function buildLesson(skillIds: string[], content: Content, rng: Rng): Exercise[] {
+export function buildLesson(skillIds: string[], content: Content, rng: Rng, unitId?: string): Exercise[] {
   const items = skillIds.map((id) => content.vocab.find((v) => v.id === id)).filter((v): v is VocabItem => !!v);
   if (!items.length) return [];
   const out: Exercise[] = [];
@@ -93,8 +113,7 @@ export function buildLesson(skillIds: string[], content: Content, rng: Rng): Exe
   for (const item of items.slice(0, 4)) out.push(multipleChoice(item, 'hanzi_to_meaning', content, rng));
   for (const item of sample(items, 3, rng)) out.push(multipleChoice(item, rng() < 0.5 ? 'meaning_to_hanzi' : 'audio_to_hanzi', content, rng));
 
-  const sentences = content.sentences.filter((s) => s.itemIds.some((id) => skillIds.includes(id)));
-  for (const s of sample(sentences, 2, rng)) out.push(sentenceOrder(s, content, rng));
+  for (const s of pickSentences(skillIds, content, 2, rng, unitId)) out.push(sentenceOrder(s, content, rng));
 
   const writable = items.flatMap((v) => [...v.hanzi].filter((ch) => content.strokeChars.has(ch)).map((ch) => ({ v, ch })));
   for (const { v, ch } of sample(writable, 1, rng)) out.push(strokeWriting(v, ch));
@@ -104,6 +123,25 @@ export function buildLesson(skillIds: string[], content: Content, rng: Rng): Exe
   out.push(matchPairs(shuffle(matchItems, rng), rng));
 
   return out;
+}
+
+/**
+ * Desafío de unidad: repasa TODO el vocabulario de la unidad mezclando tipos,
+ * sin la fase de "reconocer" (se asume visto) y con más producción.
+ */
+export function buildBossLesson(skillIds: string[], content: Content, rng: Rng, unitId?: string): Exercise[] {
+  const items = skillIds.map((id) => content.vocab.find((v) => v.id === id)).filter((v): v is VocabItem => !!v);
+  if (!items.length) return [];
+  const modes = ['meaning_to_hanzi', 'audio_to_hanzi', 'hanzi_to_meaning'] as const;
+  const out: Exercise[] = sample(items, 6, rng).map((item, i) => multipleChoice(item, modes[i % modes.length] ?? 'meaning_to_hanzi', content, rng));
+
+  for (const s of pickSentences(skillIds, content, 3, rng, unitId)) out.push(sentenceOrder(s, content, rng));
+
+  const writable = items.flatMap((v) => [...v.hanzi].filter((ch) => content.strokeChars.has(ch)).map((ch) => ({ v, ch })));
+  for (const { v, ch } of sample(writable, 1, rng)) out.push(strokeWriting(v, ch));
+
+  out.push(matchPairs(sample(items, 5, rng), rng));
+  return shuffle(out, rng);
 }
 
 /** Convierte un plan del motor adaptativo (levelEngine.planLesson) en ejercicios concretos. */

@@ -16,15 +16,22 @@ import { TaskInput } from './components/TaskInput';
 import { assessPronunciation, requestTutorTurn } from './engine/aiClient';
 import type { Scenario, TutorTurn, UserInput } from './engine/contract';
 import { buildTurnRequest, chatReducer, checkGapLocally, initChat } from './engine/orchestrator';
+import type { LessonNode } from '@/data/hsk/types';
+import { LOCAL_CONTENT } from '@/features/lesson/content';
+import { createRng } from '@/features/lesson/engine/random';
+import { createOfflineTutor, type OfflineTutor } from './engine/offlineTutor';
 import { applySandhi, scoreSyllables, toneTip, tonesFromPinyin } from './engine/tones';
 
-export function ChatScreen({ scenario }: { scenario: Scenario }) {
+export function ChatScreen({ scenario, node }: { scenario: Scenario; node?: LessonNode }) {
   const { c, spacing, type } = useTheme();
   const router = useRouter();
   const [state, dispatch] = useReducer(chatReducer, scenario, initChat);
   const snapshot = useLearnerStore((s) => s.snapshot);
   const record = useLearnerStore((s) => s.record);
   const awardXp = useProgressStore((s) => s.awardXp);
+  const completeNode = useProgressStore((s) => s.completeNode);
+  /** Tutor local que toma el relevo si el backend de IA no responde. */
+  const offline = useRef<OfflineTutor | null>(null);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const listRef = useRef<FlatList>(null);
 
@@ -46,15 +53,24 @@ export function ChatScreen({ scenario }: { scenario: Scenario }) {
     async (input: UserInput | null, display?: string) => {
       if (input && display) dispatch({ type: 'submit', input, display });
       else dispatch({ type: 'start' });
+      if (offline.current) {
+        const turn = input ? offline.current.reply(input) : offline.current.opening();
+        if (input) learnFrom(turn);
+        dispatch({ type: 'tutor_reply', turn });
+        return;
+      }
       try {
         const turn = await requestTutorTurn(buildTurnRequest(state, snapshot(), input), await getAuthToken());
         if (input) learnFrom(turn);
         dispatch({ type: 'tutor_reply', turn });
       } catch {
-        dispatch({ type: 'fail', message: 'Bao se ha quedado sin bambú 🎋 Reintenta en un momento.' });
+        // Sin servidor: Bao sigue con frases de la unidad en lugar de bloquear el camino.
+        offline.current = createOfflineTutor(scenario, LOCAL_CONTENT.sentences, LOCAL_CONTENT.vocab, createRng(Date.now()));
+        dispatch({ type: 'notice', text: 'Sin conexión con el tutor IA: Bao practica contigo con frases de la unidad 🎋' });
+        dispatch({ type: 'tutor_reply', turn: offline.current.opening() });
       }
     },
-    [state, snapshot, learnFrom],
+    [state, snapshot, learnFrom, scenario],
   );
 
   useEffect(() => {
@@ -64,9 +80,10 @@ export function ChatScreen({ scenario }: { scenario: Scenario }) {
   useEffect(() => {
     if (state.phase === 'finished') {
       awardXp(state.xpEarned);
+      if (node) completeNode(node);
       void feedback.levelUp();
     }
-  }, [state.phase, state.xpEarned, awardXp]);
+  }, [state.phase, state.xpEarned, awardXp, node, completeNode]);
 
   const onGap = (choice: string) => {
     if (!state.task) return;

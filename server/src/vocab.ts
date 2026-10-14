@@ -1,8 +1,8 @@
-import { HSK1_VOCAB } from '../../src/data/hsk/hsk1.sample.ts';
+import { VOCAB } from '../../src/data/hsk/course.ts';
 import type { VocabItem } from '../../src/data/hsk/types.ts';
 
-/** En producción: tabla `vocab` en Postgres con las ~5000 palabras de HSK 1-6. */
-const ALL: VocabItem[] = [...HSK1_VOCAB];
+/** HSK 1-2 desde el curso de la app; para HSK 3-6 conviene una tabla en base de datos. */
+const ALL: VocabItem[] = VOCAB;
 
 export function vocabForLevel(level: number): VocabItem[] {
   return ALL.filter((v) => v.level <= level);

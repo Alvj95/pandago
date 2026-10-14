@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import Svg, { G, Line, Path, Polyline } from 'react-native-svg';
-import strokeData from '@/data/strokes/hsk1.strokes.json';
+import strokeData from '@/data/strokes/hsk.strokes.json';
 import { feedback } from '@/lib/haptics';
 import { useTheme } from '@/theme';
 import type { Exercise } from '../engine/types';

@@ -8,7 +8,7 @@ export type ExerciseKind =
   | 'ai_conversation'; // diálogo con Bao / nativo IA
 
 export interface VocabItem {
-  id: string; // "hsk1-0042"
+  id: string; // "h1-你好" (nivel + hanzi)
   hanzi: string;
   pinyin: string; // con marcas de tono: "nǐ hǎo"
   tones: number[]; // [3, 3] — 5 = tono neutro
@@ -18,6 +18,14 @@ export interface VocabItem {
   prereqs?: string[];
 }
 
+export interface ConversationSetup {
+  /** Objetivo comunicativo, p.ej. "pide un té y pregunta el precio". */
+  goal: string;
+  persona: 'bao' | 'native';
+  /** Rol del personaje nativo (camarero, taxista…). */
+  role?: string;
+}
+
 export interface LessonNode {
   id: string;
   title: string;
@@ -25,6 +33,18 @@ export interface LessonNode {
   kind: 'lesson' | 'chest' | 'conversation' | 'boss';
   /** Ítems de vocabulario/gramática que la lección introduce o repasa. */
   skillIds: string[];
+  /** Solo en nodos de conversación. */
+  scenario?: ConversationSetup;
+}
+
+export interface SampleSentence {
+  id: string;
+  /** Fichas en el orden correcto. */
+  tokens: string[];
+  pinyin: string;
+  meaning: string;
+  /** Vocabulario que practica (para el modelo del estudiante). */
+  itemIds: string[];
 }
 
 export interface Unit {

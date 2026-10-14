@@ -87,8 +87,8 @@ pandago/
 │   │       ├── srs.ts            # Repetición espaciada (curva de olvido tipo FSRS)
 │   │       └── levelEngine.ts    # Selección de ejercicios, dificultad en sesión, promoción HSK
 │   ├── store/                    # useProgressStore (racha, vidas, XP, ligas, cofres) · useLearnerStore · useSettingsStore
-│   ├── data/hsk/                 # Tipos de contenido + muestra HSK 1 (20 palabras, 5 frases)
-│   ├── data/strokes/             # Orden de trazos (Make Me a Hanzi) de los caracteres de la muestra
+│   ├── data/hsk/                 # course.ts: vocabulario, unidades y frases de HSK 1-2
+│   ├── data/strokes/             # Orden de trazos (Make Me a Hanzi) de todos los caracteres del curso
 │   └── lib/                      # haptics (respeta el ajuste), auth, navigation
 │
 ├── tests/                        # node:test — motor de lecciones, trazos, tonos, chat, ligas
@@ -116,6 +116,15 @@ pandago/
 - **Bao** reacciona a todo: respira en reposo, salta con destellos al acertar, gira al completar, se estremece y anima al fallar, inclina la cabeza mientras la IA "piensa".
 - **Camino serpenteante** (onda senoidal) con nodos completados ⭐, nodo actual flotando con "EMPEZAR", cofres que se agitan y nodos bloqueados 🔒.
 
+## Contenido: HSK 1 y HSK 2 completos
+
+- **298 palabras**: las 150 de HSK 1 y 147 de HSK 2 de la lista oficial ([complete-hsk-vocabulary](https://github.com/drkameleon/complete-hsk-vocabulary), MIT) más «你好», con significado en español, la lectura correcta de las palabras con varias pronunciaciones y tonos por sílaba.
+- **16 unidades temáticas** (8 por nivel: Saludos, Números, Familia, Comida, El tiempo, La ciudad, Mi día, Mi mundo · Describir, Personas, Rutina, De compras, Moverse, Salud y deporte, En clase, Conectar ideas), **71 frases** para ordenar y **orden de trazos de los 346 caracteres**.
+- Cada unidad: 3-4 lecciones → 🎁 cofre → 💬 conversación → 🏆 desafío.
+  - **Cofre**: se abre con animación y da gemas (y a veces un protector de racha). Cumplir la meta diaria también regala un cofre.
+  - **Conversación**: con el tutor IA si hay servidor; si no hay conexión, Bao practica con frases de la unidad (huecos corregidos en el móvil), así el camino nunca se bloquea.
+  - **Desafío**: examen con todo el vocabulario de la unidad; superarlo da 30 💎.
+
 ## Lecciones (los 4 tipos de ejercicio)
 
 Cada nodo del camino genera una lección de ~11 ejercicios con una progresión pedagógica: **reconocer** (hanzi → significado) → **recordar** (significado → hanzi) → **oír** (audio → hanzi, con botón 🐢 lento) → **producir** (ordenar la frase, escribir el carácter) → **consolidar** (emparejar).
@@ -136,6 +145,10 @@ Implementada en `src/store/useProgressStore.ts`:
 - **XP** con meta diaria configurable (Relax 10 · Normal 20 · Serio 30 · Intenso 50).
 - **Ligas semanales** (Bambú → Jade → Seda → Linterna → Dragón → Emperador): grupos de 20, los 5 primeros ascienden y los 5 últimos descienden. Hoy los rivales se simulan de forma determinista por semana; en producción la clasificación viene del servidor.
 - **Cofres** con recompensa variable (refuerzo intermitente) y un mínimo garantizado.
+
+## Instalar en Android
+
+Cada cambio en `main` compila un APK (`.github/workflows/android.yml`) y lo publica en **[Releases](https://github.com/Alvj95/pandago/releases/latest)**: desde el móvil descarga `PandaGO.apk`, ábrelo y permite instalar apps de origen desconocido. Las versiones nuevas se instalan encima sin perder el progreso.
 
 ## Cómo probarla
 
@@ -173,7 +186,7 @@ ANTHROPIC_API_KEY=tu_clave npm run dev   # http://localhost:8787
 
 Desde un móvil, `localhost` es el propio móvil: pon la IP de tu ordenador en `app.json` → `expo.extra.apiUrl` (p. ej. `http://192.168.1.50:8787`).
 
-Comprobaciones: `npm run typecheck` · `npm test` (20 pruebas).
+Comprobaciones: `npm run typecheck` · `npm test` (33 pruebas).
 
 
 ## Publicación web (GitHub Pages)
@@ -183,9 +196,8 @@ Comprobaciones: `npm run typecheck` · `npm test` (20 pruebas).
 ## Qué falta para producción
 
 - Servicio de voz `/v1/speech/assess`: ASR de mandarín + alineamiento forzado + clasificador de tonos por F0 (ver `docs/AI_ENGINE.md`).
-- Autenticación real, sincronización del progreso con el servidor, ligas reales y el corpus HSK 1-6 completo (vocabulario, frases y datos de trazos).
+- Autenticación real, sincronización del progreso con el servidor, ligas reales y el contenido de HSK 3-6.
 - Efectos de sonido (acierto/fallo/cofre) y animación de Bao en **Rive** (state machine con los mismos estados que `BaoMood`) para sustituir al SVG.
-- Nodos de tipo "Desafío" (jefe de unidad) y apertura animada de cofres.
 
 ## Licencias de datos
 

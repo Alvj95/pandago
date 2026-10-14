@@ -10,13 +10,18 @@ const API_URL: string = (Constants.expoConfig?.extra?.apiUrl as string | undefin
 
 export class TutorUnavailableError extends Error {}
 
-export async function requestTutorTurn(req: TurnRequest, authToken: string, signal?: AbortSignal): Promise<TutorTurn> {
+/** Sin respuesta en este tiempo, la app pasa al modo sin conexión. */
+const TIMEOUT_MS = 15_000;
+
+export async function requestTutorTurn(req: TurnRequest, authToken: string): Promise<TutorTurn> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   const res = await fetch(`${API_URL}/v1/tutor/turn`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${authToken}` },
     body: JSON.stringify(req),
-    signal,
-  });
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timer));
   if (!res.ok) throw new TutorUnavailableError(`tutor ${res.status}`);
   // Validamos también en el cliente: si el backend cambia de forma, fallamos con claridad.
   return TutorTurn.parse(await res.json());

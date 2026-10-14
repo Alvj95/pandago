@@ -20,16 +20,16 @@ jobs:
       # Cada compilación sube el versionCode: el APK nuevo se instala encima del anterior.
       ANDROID_VERSION_CODE: ${{ github.run_number }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
-      - uses: actions/setup-java@v4
+      # Sin `cache: gradle`: el proyecto android/ no existe hasta el prebuild.
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
-          cache: gradle
 
       - run: npm ci
       - run: npm run typecheck
@@ -41,6 +41,9 @@ jobs:
       # Release = JS empaquetado dentro del APK (funciona sin ordenador ni Metro).
       # La plantilla de Expo lo firma con su keystore fija de depuración, así que las
       # actualizaciones se instalan encima. Para Google Play hará falta una keystore propia.
+      # Caché de Gradle (dependencias y wrapper) una vez generado android/.
+      - uses: gradle/actions/setup-gradle@v4
+
       - name: Assemble release APK
         working-directory: android
         run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
