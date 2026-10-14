@@ -15,3 +15,8 @@ android/
 .icon-concepts/
 scripts/course/.cache/
 __pycache__/
+
+# Claves de firma: nunca al repositorio
+*.keystore
+keystore.base64.txt
+SECRETOS-GITHUB.txt

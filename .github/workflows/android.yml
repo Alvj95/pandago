@@ -1,5 +1,10 @@
-# Compila el APK de Android en cada push a main y lo publica como Release de GitHub.
-name: Build Android APK
+# Compila PandaGO! para Android en cada push a main y lo publica como Release de GitHub:
+# - PandaGO.apk  → para instalar directamente en el móvil.
+# - PandaGO.aab  → para subir a Google Play (solo si están los secretos de firma).
+#
+# Secretos (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+name: Build Android
 
 on:
   push:
@@ -7,18 +12,20 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # publicar el APK como Release
+  contents: write # publicar la Release
 
 concurrency:
   group: android-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  apk:
+  android:
     runs-on: ubuntu-latest
     env:
-      # Cada compilación sube el versionCode: el APK nuevo se instala encima del anterior.
+      # Cada compilación sube el versionCode (Google Play exige que crezca siempre).
       ANDROID_VERSION_CODE: ${{ github.run_number }}
+      APP_VERSION: 0.1.${{ github.run_number }}
+      HAS_SIGNING: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -35,43 +42,63 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
+      # Clave de subida de Google Play: se reconstruye desde el secreto, solo en el runner.
+      - name: Restore upload keystore
+        if: env.HAS_SIGNING == 'true'
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/upload.keystore"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/upload.keystore" >> "$GITHUB_ENV"
+
       # Genera el proyecto nativo android/ a partir de app.json (no se versiona).
       - run: npx expo prebuild --platform android --no-install
 
-      # Release = JS empaquetado dentro del APK (funciona sin ordenador ni Metro).
-      # La plantilla de Expo lo firma con su keystore fija de depuración, así que las
-      # actualizaciones se instalan encima. Para Google Play hará falta una keystore propia.
       # Caché de Gradle (dependencias y wrapper) una vez generado android/.
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Assemble release APK
+      # Release = JS empaquetado dentro de la app (funciona sin ordenador ni Metro).
+      # Con secretos se firma con la clave de subida; sin ellos, con la de depuración.
+      - name: Build APK and AAB
         working-directory: android
-        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          TASKS="assembleRelease"
+          if [ "$HAS_SIGNING" = "true" ]; then TASKS="assembleRelease bundleRelease"; fi
+          ./gradlew $TASKS --no-daemon
 
-      - name: Package APK
+      - name: Package
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk PandaGO.apk
           # Algunos navegadores bloquean descargas .apk; el zip pasa.
           zip -j PandaGO-apk.zip PandaGO.apk
+          if [ "$HAS_SIGNING" = "true" ]; then cp android/app/build/outputs/bundle/release/app-release.aab PandaGO.aab; fi
 
       - uses: actions/upload-artifact@v4
         with:
-          name: pandago-apk
-          path: PandaGO.apk
+          name: pandago-android
+          path: |
+            PandaGO.apk
+            PandaGO.aab
           if-no-files-found: error
 
-      - name: Publish release with APK
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.1.${{ github.run_number }}
-          name: PandaGO! v0.1.${{ github.run_number }}
+          tag_name: v${{ env.APP_VERSION }}
+          name: PandaGO! v${{ env.APP_VERSION }}
           target_commitish: ${{ github.sha }}
           make_latest: true
+          fail_on_unmatched_files: false
           files: |
             PandaGO.apk
             PandaGO-apk.zip
+            PandaGO.aab
           body: |
-            APK de Android de PandaGO! 🐼
+            PandaGO! 🐼 v${{ env.APP_VERSION }} (versionCode ${{ env.ANDROID_VERSION_CODE }})
 
-            **Instalar:** abre esta página desde el móvil, descarga `PandaGO.apk`, ábrelo y permite "instalar apps de origen desconocido".
+            **Instalar en el móvil:** descarga `PandaGO.apk`, ábrelo y permite "instalar apps de origen desconocido".
             Si el navegador bloquea el .apk, descarga `PandaGO-apk.zip`, descomprímelo y abre el .apk de dentro.
+
+            **Google Play:** sube `PandaGO.aab` en Play Console (aparece solo si la firma de subida está configurada).

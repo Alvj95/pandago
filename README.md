@@ -150,6 +150,10 @@ Implementada en `src/store/useProgressStore.ts`:
 
 Cada cambio en `main` compila un APK (`.github/workflows/android.yml`) y lo publica en **[Releases](https://github.com/Alvj95/pandago/releases/latest)**: desde el móvil descarga `PandaGO.apk`, ábrelo y permite instalar apps de origen desconocido. Las versiones nuevas se instalan encima sin perder el progreso.
 
+## Publicar en Google Play
+
+Guía completa en **[docs/GOOGLE_PLAY.md](docs/GOOGLE_PLAY.md)**: secretos de firma, ficha (`store/listing-es.md`), gráficos y capturas (`store/`), seguridad de los datos y prueba cerrada. El workflow *Build Android* genera `PandaGO.aab` firmado con la clave de subida cuando los secretos están configurados. Política de privacidad: https://alvj95.github.io/pandago/privacidad.html
+
 ## Cómo probarla
 
 **Sin instalar nada:** abre **https://alvj95.github.io/pandago/** (se vuelve a publicar sola en cada push a `main`).

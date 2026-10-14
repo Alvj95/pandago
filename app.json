@@ -42,7 +42,8 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      "./plugins/withReleaseSigning"
     ],
     "experiments": {
       "typedRoutes": true
