@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { type AudioPlayer, createAudioPlayer } from 'expo-audio';
 import * as Speech from 'expo-speech';
 import { API_URL, hasServer } from '@/lib/api';
@@ -26,11 +27,18 @@ export const playbackRateFor = (rate: number, slow: boolean) => Math.max(0.5, Ma
 export const ttsUrl = (text: string) => `${API_URL}/v1/speech/tts?text=${encodeURIComponent(text)}`;
 
 let player: AudioPlayer | null = null;
+/** En la web se usa <audio> directamente: así se puede capturar el bloqueo de reproducción automática. */
+let webAudio: HTMLAudioElement | null = null;
 let session = 0;
 /** Si el servidor falla, durante un rato se usa directamente la voz del móvil. */
 let naturalBrokenUntil = 0;
 
 function stopPlayer() {
+  if (webAudio) {
+    webAudio.pause();
+    webAudio.onended = null;
+    webAudio = null;
+  }
   if (!player) return;
   try {
     player.pause();
@@ -65,6 +73,20 @@ export function speakChinese(text: string, opts: { rate?: number; force?: boolea
     stopPlayer();
     speakDevice(text, rate, slowVoice, opts.onDone);
   };
+  if (Platform.OS === 'web' && typeof Audio !== 'undefined') {
+    const a = new Audio(ttsUrl(text));
+    webAudio = a;
+    a.playbackRate = playbackRateFor(rate, slowVoice);
+    a.onended = () => {
+      if (id !== session || finished) return;
+      finished = true;
+      webAudio = null;
+      opts.onDone?.();
+    };
+    a.onerror = fallback;
+    a.play().catch(fallback);
+    return;
+  }
   try {
     const p = createAudioPlayer({ uri: ttsUrl(text) });
     player = p;

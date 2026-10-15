@@ -98,7 +98,7 @@ export function createApp<E extends object>(getTutor: (env: E) => Tutor) {
     const context = ctx && typeof ctx.hanzi === 'string' ? { hanzi: ctx.hanzi.slice(0, 120), pinyin: String(ctx.pinyin ?? '').slice(0, 200), translation: String(ctx.translation ?? '').slice(0, 200) } : undefined;
     const level = Number(body?.hsk_level);
     try {
-      return c.json(await tutor.ask({ question, context, hsk_level: level >= 1 && level <= 6 ? Math.round(level) : 1 }));
+      return c.json(await tutor.ask({ question, context, hsk_level: level >= 1 && level <= 6 ? Math.round(level) : 1, no_spoilers: body?.no_spoilers === true }));
     } catch (err) {
       console.error(err);
       return c.json({ error: 'tutor_unavailable', detail: String(err).slice(0, 300) }, 502);

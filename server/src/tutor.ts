@@ -37,6 +37,8 @@ export interface AskRequest {
   /** Frase de la lección sobre la que se pregunta (opcional). */
   context?: { hanzi: string; pinyin?: string; translation?: string };
   hsk_level: number;
+  /** El estudiante aún no ha respondido el ejercicio: pistas sí, la respuesta no. */
+  no_spoilers?: boolean;
 }
 
 export class TutorRefusedError extends Error {}

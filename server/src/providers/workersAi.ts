@@ -175,7 +175,8 @@ export function askUserTurn(req: AskRequest): string {
     ? `Frase de la lección: ${req.context.hanzi}${req.context.pinyin ? ` (${req.context.pinyin})` : ''}${req.context.translation ? ` «${req.context.translation}»` : ''}\n`
     : '';
   // «/no_think» evita que Qwen3 gaste la respuesta en razonamientos.
-  return `${ctx}Pregunta del estudiante: ${req.question.slice(0, 300)} /no_think`;
+  const spoil = req.no_spoilers ? 'El estudiante aún no ha respondido el ejercicio de esta frase: dale pistas, pero NO le digas la respuesta ni el significado completo.\n' : '';
+  return `${ctx}${spoil}Pregunta del estudiante: ${req.question.slice(0, 300)} /no_think`;
 }
 
 /** Quita razonamientos <think>, Markdown y espacios sobrantes de una respuesta libre. */

@@ -67,13 +67,18 @@ export async function assessPronunciation(audioUri: string, expectedHanzi: strin
 }
 
 /** «Pregúntale a Bao»: duda libre sobre una frase; respuesta en español. */
-export async function askBao(question: string, context: { hanzi: string; pinyin?: string; translation?: string } | undefined, hskLevel: number): Promise<string> {
+export async function askBao(
+  question: string,
+  context: { hanzi: string; pinyin?: string; translation?: string } | undefined,
+  hskLevel: number,
+  noSpoilers = false,
+): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20_000);
   const res = await fetch(`${API_URL}/v1/tutor/ask`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ question, context, hsk_level: hskLevel }),
+    body: JSON.stringify({ question, context, hsk_level: hskLevel, no_spoilers: noSpoilers }),
     signal: controller.signal,
   }).finally(() => clearTimeout(timer));
   if (!res.ok) throw new TutorUnavailableError(`ask ${res.status}`);

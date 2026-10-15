@@ -14,7 +14,10 @@ import { useTheme } from '@/theme';
 import { trackQuest } from '@/store/useQuestStore';
 import { FeedbackBanner } from './components/FeedbackBanner';
 import { LessonComplete, OutOfHearts } from './components/LessonEnd';
+import { VOCAB } from '@/data/hsk/course';
+import { AskBaoSheet } from './components/AskBaoSheet';
 import { LessonHeader } from './components/LessonHeader';
+import { askContextOf, quickQuestions } from './askContext';
 import { LessonIntro } from './components/LessonIntro';
 import { MatchPairs } from './components/MatchPairs';
 import { MultipleChoice } from './components/MultipleChoice';
@@ -45,6 +48,7 @@ export function LessonScreen({ exercises, node, level, costsHearts = true, intro
   const [state, dispatch] = useReducer(lessonReducer, undefined, () => initLesson(exercises, progress.hearts));
   const [choice, setChoice] = useState<number | null>(null);
   const [order, setOrder] = useState<number[]>([]);
+  const [asking, setAsking] = useState(false);
   const rewarded = useRef(false);
   const [learning, setLearning] = useState(!!intro?.words.length);
 
@@ -133,7 +137,15 @@ export function LessonScreen({ exercises, node, level, costsHearts = true, intro
 
   return (
     <SafeAreaView style={[styles.flex, { backgroundColor: c.background }]}>
-      <LessonHeader progress={progressOf(state)} hearts={costsHearts ? state.hearts : null} combo={state.combo} onClose={() => exitTo(router)} />
+      <LessonHeader progress={progressOf(state)} hearts={costsHearts ? state.hearts : null} combo={state.combo} onClose={() => exitTo(router)} onAsk={() => setAsking(true)} />
+      <AskBaoSheet
+        key={ex.id + state.index}
+        visible={asking}
+        onClose={() => setAsking(false)}
+        context={askContextOf(ex, VOCAB)}
+        questions={quickQuestions(ex, askContextOf(ex, VOCAB))}
+        noSpoilers={!revealed}
+      />
 
       <ScrollView contentContainerStyle={{ padding: spacing.md, gap: spacing.lg, flexGrow: 1 }} scrollEnabled={ex.kind !== 'stroke_writing'}>
         <Text style={[type.display, { color: c.textPrimary, fontSize: 24 }]}>{ex.instruction}</Text>
