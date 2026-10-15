@@ -25,10 +25,11 @@ const TURN_SCHEMA = z.toJSONSchema(TutorTurn);
 const FORMAT = `
 # Formato de respuesta (OBLIGATORIO)
 Responde SOLO con un objeto JSON válido, sin texto antes ni después, con esta forma:
-{"reply":{"hanzi":"你好！你叫什么名字？","pinyin":"Nǐ hǎo! Nǐ jiào shénme míngzi?","translation":"¡Hola! ¿Cómo te llamas?"},
- "corrections":[{"original":"我叫是Ana","corrected":"我叫Ana","explanation":"Con 叫 no hace falta 是.","error_tag":"grammar:shi-with-jiao","severity":"minor"}],
- "task_score":0.8,"bao_mood":"happy","hint":null,"explanation":"叫 + nombre = llamarse.",
- "next_task":{"type":"open_question"},"used_item_ids":["h1-叫"],"scenario_complete":false}
+{"reply":{"hanzi":"…","pinyin":"…","translation":"…"},
+ "corrections":[{"original":"lo que escribió el estudiante","corrected":"la frase correcta","explanation":"por qué, en una frase","error_tag":"grammar:…","severity":"minor"}],
+ "task_score":0.8,"bao_mood":"happy","hint":null,"explanation":"mini-lección sobre la palabra o estructura clave",
+ "next_task":{"type":"open_question"},"used_item_ids":["h1-…"],"scenario_complete":false}
+(Los «…» son marcadores: escribe tu propio contenido, no copies este ejemplo.)
 - "bao_mood" es uno de: happy, celebrate, encourage, talking.
 - "next_task" es {"type":"open_question"} o {"type":"fill_gap","template_hanzi":"我___茶","options":["喝","吃","看"],"answer":"喝"} o {"type":"repeat_aloud","hanzi":"…","pinyin":"…"}.
 - "corrections" puede ser [] si no hay errores. "hint" y "explanation" pueden ser null.`;
