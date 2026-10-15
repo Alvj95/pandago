@@ -125,6 +125,16 @@ pandago/
   - **Conversación**: con el tutor IA si hay servidor; si no hay conexión, Bao practica con frases de la unidad (huecos corregidos en el móvil), así el camino nunca se bloquea.
   - **Desafío**: examen con todo el vocabulario de la unidad; superarlo da 30 💎.
 
+## 🎤 Aprende cantando (karaoke)
+
+Pestaña **Cantar** con 5 canciones: 3 infantiles tradicionales chinas de dominio público (两只老虎 *Dos tigres*, 小星星 *Estrellita*, 生日快乐 *Feliz cumpleaños*) y 2 originales de PandaGO! con vocabulario HSK 1 sobre melodías de dominio público (你好歌, 数字歌).
+
+- **Letra**: palabras de la canción, pinyin coloreado por tono, escuchar la melodía de cada línea (se ilumina al ritmo) o su pronunciación hablada.
+- **Karaoke**: cuenta atrás, la sílaba que toca se ilumina al compás, la línea siguiente debajo y Bao bailando; con **voz guía** o **solo música** (se puede cambiar en plena canción). Al terminar: +5 XP.
+- **Reto**: completa los huecos de la letra (hasta 3 ⭐).
+
+La música se compone y sintetiza con `scripts/songs/build.py` (numpy + ffmpeg) a partir de `scripts/songs/songs.src.json` (letra, pinyin, notas y acordes): genera las dos pistas MP3 de cada canción y los tiempos exactos de cada sílaba, y comprueba que cada nota suena donde está escrita. Para añadir una canción basta con escribirla en ese JSON y ejecutar el script.
+
 ## Lecciones (los 4 tipos de ejercicio)
 
 Cada nodo del camino genera una lección de ~11 ejercicios con una progresión pedagógica: **reconocer** (hanzi → significado) → **recordar** (significado → hanzi) → **oír** (audio → hanzi, con botón 🐢 lento) → **producir** (ordenar la frase, escribir el carácter) → **consolidar** (emparejar).
@@ -190,7 +200,7 @@ ANTHROPIC_API_KEY=tu_clave npm run dev   # http://localhost:8787
 
 Desde un móvil, `localhost` es el propio móvil: pon la IP de tu ordenador en `app.json` → `expo.extra.apiUrl` (p. ej. `http://192.168.1.50:8787`).
 
-Comprobaciones: `npm run typecheck` · `npm test` (33 pruebas).
+Comprobaciones: `npm run typecheck` · `npm test` (40 pruebas).
 
 
 ## Publicación web (GitHub Pages)

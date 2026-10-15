@@ -1,0 +1,75 @@
+{
+  "_formato": "Cada línea: 'notes' = sílabas separadas por espacios, cada una 'hanzi=nota[/pulsos][+nota[/pulsos]]' (pulsos por defecto 1). 'pinyin' = una sílaba por hanzi. 'chords' = 'acorde:pulsos' que suman los pulsos de la línea.",
+  "songs": [
+    {
+      "id": "liang-zhi-laohu",
+      "title": "两只老虎", "pinyin": "Liǎng zhī lǎohǔ", "es": "Dos tigres",
+      "origin": "traditional", "originNote": "Canción infantil tradicional china (dominio público), con la melodía de «Frère Jacques».",
+      "bpm": 104, "meter": 4, "emoji": "🐯", "color": "primary",
+      "lines": [
+        { "notes": "两=C4 只=D4 老=E4 虎=C4 两=C4 只=D4 老=E4 虎=C4", "pinyin": "liǎng zhī lǎo hǔ liǎng zhī lǎo hǔ", "es": "Dos tigres, dos tigres", "chords": "C:8" },
+        { "notes": "跑=E4 得=F4 快=G4/2 跑=E4 得=F4 快=G4/2", "pinyin": "pǎo de kuài pǎo de kuài", "es": "corren rápido, corren rápido", "chords": "C:4 C:4" },
+        { "notes": "一=G4/0.5 只=A4/0.5 没=G4/0.5 有=F4/0.5 眼=E4 睛=C4 一=G4/0.5 只=A4/0.5 没=G4/0.5 有=F4/0.5 尾=E4 巴=C4", "pinyin": "yì zhī méi yǒu yǎn jing yì zhī méi yǒu wěi ba", "es": "uno no tiene ojos, otro no tiene cola", "chords": "C:4 C:4" },
+        { "notes": "真=C4 奇=G3 怪=C4/2 真=C4 奇=G3 怪=C4/2", "pinyin": "zhēn qí guài zhēn qí guài", "es": "¡qué raro, qué raro!", "chords": "C:2 G:2 C:4" }
+      ]
+    },
+    {
+      "id": "xiao-xingxing",
+      "title": "小星星", "pinyin": "Xiǎo xīngxing", "es": "Estrellita",
+      "origin": "traditional", "originNote": "Letra infantil tradicional china (dominio público), con la melodía de «Ah! vous dirai-je, maman».",
+      "bpm": 92, "meter": 4, "emoji": "⭐", "color": "info",
+      "lines": [
+        { "notes": "一=C4 闪=C4 一=G4 闪=G4 亮=A4 晶=A4 晶=G4/2", "pinyin": "yì shǎn yì shǎn liàng jīng jīng", "es": "Brilla, brilla, reluciente", "chords": "C:4 F:2 C:2" },
+        { "notes": "满=F4 天=F4 都=E4 是=E4 小=D4 星=D4 星=C4/2", "pinyin": "mǎn tiān dōu shì xiǎo xīng xīng", "es": "el cielo está lleno de estrellitas", "chords": "F:2 C:2 G:2 C:2" },
+        { "notes": "挂=G4 在=G4 天=F4 上=F4 放=E4 光=E4 明=D4/2", "pinyin": "guà zài tiān shàng fàng guāng míng", "es": "colgadas en el cielo, dan su luz", "chords": "C:2 F:2 C:2 G:2" },
+        { "notes": "好=G4 像=G4 许=F4 多=F4 小=E4 眼=E4 睛=D4/2", "pinyin": "hǎo xiàng xǔ duō xiǎo yǎn jing", "es": "parecen muchos ojitos", "chords": "C:2 F:2 C:2 G:2" },
+        { "notes": "一=C4 闪=C4 一=G4 闪=G4 亮=A4 晶=A4 晶=G4/2", "pinyin": "yì shǎn yì shǎn liàng jīng jīng", "es": "Brilla, brilla, reluciente", "chords": "C:4 F:2 C:2" },
+        { "notes": "满=F4 天=F4 都=E4 是=E4 小=D4 星=D4 星=C4/2", "pinyin": "mǎn tiān dōu shì xiǎo xīng xīng", "es": "el cielo está lleno de estrellitas", "chords": "F:2 C:2 G:2 C:2" }
+      ]
+    },
+    {
+      "id": "shengri-kuaile",
+      "title": "生日快乐", "pinyin": "Shēngrì kuàilè", "es": "Feliz cumpleaños",
+      "origin": "traditional", "originNote": "Versión china tradicional de «Happy Birthday to You» (melodía de dominio público).",
+      "bpm": 96, "meter": 3, "emoji": "🎂", "color": "league",
+      "lines": [
+        { "notes": "祝=G4/0.75 你=G4/0.25 生=A4 日=G4 快=C5 乐=B4/2", "pinyin": "zhù nǐ shēng rì kuài lè", "es": "Feliz cumpleaños (te deseo)", "chords": "C:3 G:3" },
+        { "notes": "祝=G4/0.75 你=G4/0.25 生=A4 日=G4 快=D5 乐=C5/2", "pinyin": "zhù nǐ shēng rì kuài lè", "es": "feliz cumpleaños", "chords": "G:3 C:3" },
+        { "notes": "祝=G4/0.75 你=G4/0.25 生=G5 日=E5 快=C5 乐=B4+A4/2", "pinyin": "zhù nǐ shēng rì kuài lè", "es": "feliz, feliz cumpleaños", "chords": "C:3 F:4" },
+        { "notes": "祝=F5/0.75 你=F5/0.25 生=E5 日=C5 快=D5 乐=C5/3", "pinyin": "zhù nǐ shēng rì kuài lè", "es": "¡feliz cumpleaños a ti!", "chords": "C:2 G:2 C:3" }
+      ]
+    },
+    {
+      "id": "nihao-ge",
+      "title": "你好歌", "pinyin": "Nǐ hǎo gē", "es": "La canción del hola",
+      "origin": "original", "originNote": "Letra original de PandaGO! con la melodía tradicional de «London Bridge» (dominio público).",
+      "bpm": 100, "meter": 4, "emoji": "👋", "color": "success",
+      "lines": [
+        { "notes": "你=G4/1.5 好=A4/0.5 你=G4 好=F4 你=E4 好=F4 吗=G4/2", "pinyin": "nǐ hǎo nǐ hǎo nǐ hǎo ma", "es": "Hola, hola, ¿qué tal?", "chords": "C:8" },
+        { "notes": "我=D4 很=E4 好=F4/2", "pinyin": "wǒ hěn hǎo", "es": "estoy muy bien", "chords": "G:4" },
+        { "notes": "谢=E4 谢=F4 你=G4/2", "pinyin": "xiè xie nǐ", "es": "gracias a ti", "chords": "C:4" },
+        { "notes": "你=G4/1.5 叫=A4/0.5 什=G4 么=F4 名=E4 字=F4 呀=G4/2", "pinyin": "nǐ jiào shén me míng zi ya", "es": "¿cómo te llamas?", "chords": "C:8" },
+        { "notes": "我=D4/2 叫=G4/2 小=E4 明=C4/3", "pinyin": "wǒ jiào xiǎo míng", "es": "me llamo Xiaoming", "chords": "G:4 C:4" },
+        { "notes": "再=G4/1.5 见=A4/0.5 再=G4 见=F4 说=E4 再=F4 见=G4/2", "pinyin": "zài jiàn zài jiàn shuō zài jiàn", "es": "Adiós, adiós, digo adiós", "chords": "C:8" },
+        { "notes": "明=D4 天=E4 见=F4/2", "pinyin": "míng tiān jiàn", "es": "hasta mañana", "chords": "G:4" },
+        { "notes": "明=E4 天=F4 见=G4/2", "pinyin": "míng tiān jiàn", "es": "hasta mañana", "chords": "C:4" },
+        { "notes": "谢=G4/1.5 谢=A4/0.5 老=G4 师=F4 谢=E4 谢=F4 你=G4/2", "pinyin": "xiè xie lǎo shī xiè xie nǐ", "es": "gracias, profe, gracias a ti", "chords": "C:8" },
+        { "notes": "我=D4/2 们=G4/2 再=E4 见=C4/3", "pinyin": "wǒ men zài jiàn", "es": "nos despedimos", "chords": "G:4 C:4" }
+      ]
+    },
+    {
+      "id": "shuzi-ge",
+      "title": "数字歌", "pinyin": "Shùzì gē", "es": "La canción de los números",
+      "origin": "original", "originNote": "Letra original de PandaGO! con la melodía de «Ah! vous dirai-je, maman» (dominio público).",
+      "bpm": 96, "meter": 4, "emoji": "🔢", "color": "primary",
+      "lines": [
+        { "notes": "一=C4 二=C4 三=G4 四=G4 五=A4 六=A4 七=G4/2", "pinyin": "yī èr sān sì wǔ liù qī", "es": "uno, dos, tres, cuatro, cinco, seis, siete", "chords": "C:4 F:2 C:2" },
+        { "notes": "八=F4 九=F4 十=E4 个=E4 好=D4 朋=D4 友=C4/2", "pinyin": "bā jiǔ shí gè hǎo péng you", "es": "ocho, nueve, diez buenos amigos", "chords": "F:2 C:2 G:2 C:2" },
+        { "notes": "一=G4 个=G4 两=F4 个=F4 三=E4 个=E4 人=D4/2", "pinyin": "yí gè liǎng gè sān gè rén", "es": "una, dos, tres personas", "chords": "C:2 F:2 C:2 G:2" },
+        { "notes": "我=G4 们=G4 一=F4 起=F4 学=E4 汉=E4 语=D4/2", "pinyin": "wǒ men yì qǐ xué hàn yǔ", "es": "juntos aprendemos chino", "chords": "C:2 F:2 C:2 G:2" },
+        { "notes": "一=C4 二=C4 三=G4 四=G4 五=A4 六=A4 七=G4/2", "pinyin": "yī èr sān sì wǔ liù qī", "es": "uno, dos, tres, cuatro, cinco, seis, siete", "chords": "C:4 F:2 C:2" },
+        { "notes": "八=F4 九=F4 十=E4 个=E4 好=D4 朋=D4 友=C4/2", "pinyin": "bā jiǔ shí gè hǎo péng you", "es": "ocho, nueve, diez buenos amigos", "chords": "F:2 C:2 G:2 C:2" }
+      ]
+    }
+  ]
+}
