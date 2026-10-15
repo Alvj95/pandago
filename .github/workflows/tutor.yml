@@ -73,14 +73,20 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           test "$CODE" = "200"
-      # Voz china sintética grabada como m4a (AAC), igual que el micrófono de Android.
+      # Voz china sintética (MeloTTS de Workers AI) grabada como m4a (AAC), igual que el micrófono de Android.
       - name: Probar el reconocimiento de voz
         if: env.HAS_CF == 'true'
         continue-on-error: true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          sudo apt-get install -y -qq espeak-ng ffmpeg > /dev/null
-          espeak-ng -v cmn -s 120 -w take.wav "你好，我叫宝宝。"
-          ffmpeg -loglevel error -y -i take.wav -ar 44100 -ac 1 -c:a aac -b:a 128k take.m4a
+          sudo apt-get install -y -qq ffmpeg > /dev/null
+          curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/ai/run/@cf/myshell-ai/melotts" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' \
+            --data '{"prompt":"你好，我叫宝宝。","lang":"zh"}' > tts.json
+          jq -r '.result.audio' tts.json | base64 -d > take.mp3 || { jq -c '.errors' tts.json; exit 1; }
+          ffmpeg -loglevel error -y -i take.mp3 -ar 44100 -ac 1 -c:a aac -b:a 128k take.m4a
           for EXPECTED in "你好，我叫宝宝。" ""; do
             RES=$(curl -s -w '\n%{http_code}' -X POST "$URL/v1/speech/assess" -F "audio=@take.m4a;type=audio/m4a" -F "expected=$EXPECTED")
             CODE=$(echo "$RES" | tail -1)
