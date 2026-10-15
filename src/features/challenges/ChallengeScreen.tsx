@@ -12,6 +12,7 @@ import { speakChinese } from '@/lib/speech';
 import { useLearnerStore } from '@/store/useLearnerStore';
 import { MAX_HEARTS, useProgressStore } from '@/store/useProgressStore';
 import { useTheme } from '@/theme';
+import { trackQuest } from '@/store/useQuestStore';
 import { answer, buildChallenge, MAX_CHALLENGE_HEARTS_PER_DAY, type Challenge, type ChallengeKind, pickKind, progressOf, seenVocab, startRun, timeUp, weakVocab } from './engine';
 
 const WIN_XP = 5;
@@ -74,6 +75,7 @@ export function ChallengeScreen() {
         rewarded.current = true;
         setHeartWon(winChallengeHeart());
         awardXp(WIN_XP);
+        trackQuest('challenge_won');
         void feedback.levelUp();
       }
     }, 700);

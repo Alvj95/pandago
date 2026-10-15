@@ -10,6 +10,7 @@ import { dueItems } from '@/features/learning/adaptive/srs';
 import { useLearnerStore } from '@/store/useLearnerStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { useTheme } from '@/theme';
+import { QuestsCard } from '@/features/quests/QuestsCard';
 import { DailyGoalCard } from './components/DailyGoalCard';
 import { LearningPath } from './components/LearningPath';
 import { LeagueChestRow } from './components/LeagueChestRow';
@@ -58,6 +59,7 @@ export function HomeScreen() {
         <DailyGoalCard />
         <QuickActions dueCount={dueCount} onPress={(key) => router.push(key === 'review' ? '/review' : { pathname: '/chat', params: { mode: key } })} />
         <LeagueChestRow onOpenLeague={() => router.push('/leagues')} onOpenChest={handleChest} />
+        <QuestsCard index={3} />
         {showTip && (
           <View onTouchEnd={() => setShowTip(false)}>
             <BaoBubble {...TIP} mood="talking" />

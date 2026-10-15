@@ -11,6 +11,7 @@ import { feedback } from '@/lib/haptics';
 import { useLearnerStore } from '@/store/useLearnerStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
+import { trackQuest } from '@/store/useQuestStore';
 import { hasChineseVoice, speakChinese, stopSpeaking } from '@/lib/speech';
 import { useTheme } from '@/theme';
 import { MessageBubble } from './components/MessageBubble';
@@ -56,7 +57,10 @@ export function ChatScreen({ scenario, node }: { scenario: Scenario; node?: Less
 
   const send = useCallback(
     async (input: UserInput | null, display?: string) => {
-      if (input && display) dispatch({ type: 'submit', input, display });
+      if (input && display) {
+        dispatch({ type: 'submit', input, display });
+        trackQuest('chat_turn');
+      }
       else dispatch({ type: 'start' });
       if (offline.current) {
         const turn = input ? offline.current.reply(input) : offline.current.opening();

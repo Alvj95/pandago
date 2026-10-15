@@ -7,6 +7,7 @@ import { useLearnerStore } from '@/store/useLearnerStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useTheme } from '@/theme';
+import { AchievementsCard } from '@/features/quests/AchievementsCard';
 
 const DIM_LABEL: Record<Dimension, { label: string; icon: string }> = {
   vocab: { label: 'Vocabulario', icon: '📚' },
@@ -100,7 +101,9 @@ export function ProfileScreen() {
           </Card>
         )}
 
-        <Card index={6}>
+        <AchievementsCard index={6} />
+
+        <Card index={7}>
           <Text style={[type.title, { color: c.textPrimary, marginBottom: spacing.sm }]}>Ajustes</Text>
           <View style={{ gap: spacing.md }}>
             <View style={{ gap: spacing.xs }}>

@@ -11,6 +11,7 @@ import { useLearnerStore } from '@/store/useLearnerStore';
 import { BOSS_GEMS } from '@/features/rewards/chest';
 import { MAX_HEARTS, useProgressStore } from '@/store/useProgressStore';
 import { useTheme } from '@/theme';
+import { trackQuest } from '@/store/useQuestStore';
 import { FeedbackBanner } from './components/FeedbackBanner';
 import { LessonComplete, OutOfHearts } from './components/LessonEnd';
 import { LessonHeader } from './components/LessonHeader';
@@ -70,8 +71,17 @@ export function LessonScreen({ exercises, node, level, costsHearts = true, intro
     progress.awardXp(summary.xp);
     if (node) progress.completeNode(node);
     if (node?.kind === 'boss') progress.earnGems(BOSS_GEMS);
+    if (node) {
+      trackQuest('lesson');
+      if (summary.perfect) trackQuest('perfect_lesson');
+      if (node.kind === 'boss') trackQuest('boss');
+    }
     void feedback.levelUp();
   }, [summary, node, progress]);
+
+  useEffect(() => {
+    if (state.combo > 0) trackQuest('combo', state.combo);
+  }, [state.combo]);
 
   // Vidas ganadas fuera de la lección (reto, regeneración) desbloquean la lección al volver.
   const outOfHearts = state.phase === 'out_of_hearts' || (costsHearts && state.hearts === 0);

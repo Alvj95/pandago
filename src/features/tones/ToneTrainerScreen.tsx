@@ -16,6 +16,7 @@ import { useLearnerStore } from '@/store/useLearnerStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { useToneStore } from '@/store/useToneStore';
 import { useTheme } from '@/theme';
+import { trackQuest } from '@/store/useQuestStore';
 import { buildRound, LEVELS, syllableResults, TONE_TIPS, type ToneLevel, type ToneQuestion, toneLabel, weakestTone } from './trainer';
 
 const ROUND = 10;
@@ -46,9 +47,10 @@ export function ToneTrainerScreen() {
     if (!done || !level || finished.current) return;
     finished.current = true;
     finishRound(level, score);
+    if (score === questions.length) trackQuest('tone_perfect');
     if (score > 0) awardXp(score);
     void feedback.levelUp();
-  }, [done, level, score, finishRound, awardXp]);
+  }, [done, level, score, finishRound, awardXp, questions.length]);
 
   const start = (l: ToneLevel) => {
     setQuestions(buildRound(l, VOCAB, createRng(Date.now()), ROUND));
@@ -63,7 +65,10 @@ export function ToneTrainerScreen() {
     if (!q || picked !== null) return;
     setPicked(i);
     const ok = i === q.answerIndex;
-    if (ok) setScore((s) => s + 1);
+    if (ok) {
+      setScore((s) => s + 1);
+      trackQuest('tone_correct');
+    }
     void (ok ? feedback.correct() : feedback.wrong());
     recordSyllables(syllableResults(q, i));
     record({ itemId: `tones:${q.hanzi}`, dimension: 'tones', score: ok ? 1 : 0, difficulty: 0, errorTags: ok ? [] : ['tones:contour'] });

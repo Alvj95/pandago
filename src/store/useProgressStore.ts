@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import type { HskLevel, LessonNode } from '@/data/hsk/types';
 import { MAX_FREEZES, type ChestReward } from '@/features/rewards/chest';
 import { MAX_CHALLENGE_HEARTS_PER_DAY } from '@/features/challenges/engine';
+import { trackQuest } from './useQuestStore';
 import type { League } from '@/features/leagues/leaderboard';
 
 export const MAX_HEARTS = 5;
@@ -41,6 +42,8 @@ export interface ProgressState {
   consumePendingChest: () => boolean;
   claimReward: (reward: ChestReward) => void;
   earnGems: (amount: number) => void;
+  /** Suma un cofre pendiente de abrir (premio de misiones). */
+  addPendingChest: () => void;
   /** Vidas que aún se pueden ganar hoy con retos. */
   challengeHeartsLeft: (now?: number) => number;
   /** Suma 1 vida por reto superado si quedan hoy y no estás al máximo; devuelve si se sumó. */
@@ -86,6 +89,8 @@ export const useProgressStore = create<ProgressState>()(
           streakDays: firstActivityToday ? s.streakDays + 1 : s.streakDays,
           lastActiveDay: today,
         });
+        trackQuest('xp', amount);
+        trackQuest('streak', get().streakDays);
       },
 
       setDailyGoal: (xp) => set({ dailyGoalXp: xp }),
@@ -119,6 +124,8 @@ export const useProgressStore = create<ProgressState>()(
         })),
 
       earnGems: (amount) => set((s) => ({ gems: s.gems + amount })),
+
+      addPendingChest: () => set((s) => ({ pendingChests: s.pendingChests + 1 })),
 
       challengeHeartsLeft: (now = Date.now()) => {
         const { day, count } = get().challengeHearts;
