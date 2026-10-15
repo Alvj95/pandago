@@ -54,6 +54,19 @@ export function PracticeScreen() {
           </Card>
         </PressableScale>
 
+        <PressableScale onPress={() => router.push('/tones')} accessibilityRole="button" accessibilityLabel="Entrenador de tonos">
+          <Card index={2} tint={c.info} style={{ borderColor: c.info }}>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <Text style={styles.icon}>🎵</Text>
+              <View style={styles.flex}>
+                <Text style={[type.title, styles.onBrand]}>Entrenador de tonos</Text>
+                <Text style={[type.body, styles.onBrand]}>Escucha y reconoce los 4 tonos, parejas y el tono neutro</Text>
+              </View>
+              <Text style={[type.title, styles.onBrand]}>›</Text>
+            </View>
+          </Card>
+        </PressableScale>
+
         <Text style={[type.caption, { color: c.textSecondary, marginTop: spacing.sm }]}>CONVERSACIONES CON IA</Text>
         {ALL_SCENARIOS.map(({ scenario, icon, unitTitle }, i) => (
           <PressableScale
@@ -64,7 +77,7 @@ export function PracticeScreen() {
               router.push(scenario.id === 'voice-drill' ? { pathname: '/chat', params: { mode: 'voice' } } : { pathname: '/chat', params: { nodeId: scenario.id } })
             }
           >
-            <Card index={i + 2}>
+            <Card index={i + 3}>
               <View style={[styles.row, { gap: spacing.sm }]}>
                 <View style={[styles.badge, { backgroundColor: scenario.persona === 'bao' ? c.primarySoft : c.successSoft, borderRadius: radius.md }]}>
                   <Text style={styles.icon}>{icon}</Text>
