@@ -64,7 +64,7 @@ export function createApp<E extends object>(getTutor: (env: E) => Tutor) {
     }
   });
 
-  // Voz natural de Bao. Es un GET para que el reproductor del móvil pueda abrir la URL directamente.
+  // Voz natural de Bao (WAV o MP3). Es un GET para que el reproductor del móvil pueda abrir la URL directamente.
   app.get('/v1/speech/tts', async (c) => {
     const text = (c.req.query('text') ?? '').trim();
     if (!text || text.length > 200) return c.json({ error: 'bad_request', detail: 'texto vacío o demasiado largo' }, 400);
@@ -76,8 +76,11 @@ export function createApp<E extends object>(getTutor: (env: E) => Tutor) {
     if (hit) return hit;
     if (overLimit('tts', ipOf((n) => c.req.header(n)))) return c.json({ error: 'rate_limited' }, 429);
     try {
-      const res = new Response(await tutor.tts(text), {
-        headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=2592000', 'access-control-allow-origin': '*' },
+      const audio = await tutor.tts(text);
+      // MeloTTS devuelve WAV («RIFF…»); otros motores, MP3.
+      const isWav = new TextDecoder().decode(new Uint8Array(audio, 0, Math.min(4, audio.byteLength))) === 'RIFF';
+      const res = new Response(audio, {
+        headers: { 'content-type': isWav ? 'audio/wav' : 'audio/mpeg', 'cache-control': 'public, max-age=2592000', 'access-control-allow-origin': '*' },
       });
       await cache?.put(key, res.clone()).catch(() => undefined);
       return res;

@@ -122,7 +122,7 @@ describe('tutor gratis (Workers AI)', () => {
     assert.equal((await tutor.tts!('你好')).byteLength, 3);
   });
 
-  it('la API sirve la voz (GET, audio/mpeg) y las preguntas', async () => {
+  it('la API sirve la voz (GET, mp3 o wav) y las preguntas', async () => {
     const app = createApp(() => ({
       name: 'x',
       turn: async () => Promise.reject(new Error('no')),
@@ -133,6 +133,8 @@ describe('tutor gratis (Workers AI)', () => {
     assert.equal(tts.status, 200);
     assert.equal(tts.headers.get('content-type'), 'audio/mpeg');
     assert.equal((await tts.arrayBuffer()).byteLength, 3);
+    const wavApp = createApp(() => ({ name: 'x', turn: async () => Promise.reject(new Error('no')), tts: async () => new TextEncoder().encode('RIFF....WAVE').buffer as ArrayBuffer }));
+    assert.equal((await wavApp.request('/v1/speech/tts?text=好')).headers.get('content-type'), 'audio/wav');
     assert.equal((await app.request('/v1/speech/tts?text=')).status, 400);
     const ask = await app.request('/v1/tutor/ask', { method: 'POST', body: JSON.stringify({ question: '¿qué?', hsk_level: 2 }), headers: { 'content-type': 'application/json' } });
     assert.deepEqual(await ask.json(), { answer: 'R: ¿qué? (2)' });
