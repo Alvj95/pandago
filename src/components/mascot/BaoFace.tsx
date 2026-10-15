@@ -1,14 +1,15 @@
 import Svg, { Circle, Ellipse, G, Path } from 'react-native-svg';
 import type { BaoMood } from './types';
 
-const FUR = '#E4572E';
+export const FUR = '#E4572E';
 const FUR_DARK = '#8C2F14';
-const CREAM = '#FFF4E6';
-const INK = '#2A1A14';
+export const CREAM = '#FFF4E6';
+export const INK = '#2A1A14';
 
 /**
  * Cara vectorial de Bao (panda rojo). La expresión (ojos/boca/mejillas)
- * cambia según el `mood`; el movimiento del cuerpo lo anima <Bao />.
+ * cambia según el `mood`; las orejas, los párpados, la boca al hablar y el
+ * movimiento del cuerpo los anima <Bao /> por capas.
  * En producción esto se sustituye por un archivo Rive con state machine
  * cuyos inputs tienen los mismos nombres que BaoMood.
  */
@@ -18,13 +19,6 @@ export function BaoFace({ mood, size }: { mood: BaoMood; size: number }) {
 
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120">
-      {/* Orejas */}
-      <G>
-        <Path d="M18 38 L26 8 L48 26 Z" fill={FUR} />
-        <Path d="M24 32 L28 16 L40 26 Z" fill={CREAM} />
-        <Path d="M102 38 L94 8 L72 26 Z" fill={FUR} />
-        <Path d="M96 32 L92 16 L80 26 Z" fill={CREAM} />
-      </G>
       {/* Cabeza */}
       <Ellipse cx={60} cy={64} rx={48} ry={42} fill={FUR} />
       {/* Máscara blanca característica */}
@@ -67,9 +61,7 @@ export function BaoFace({ mood, size }: { mood: BaoMood; size: number }) {
       <Ellipse cx={60} cy={76} rx={6} ry={4.5} fill={INK} />
 
       {/* Boca */}
-      {mood === 'talking' ? (
-        <Ellipse cx={60} cy={89} rx={6} ry={5} fill={INK} />
-      ) : happy ? (
+      {mood === 'talking' ? null /* la boca que habla la anima <Bao /> */ : happy ? (
         <Path d="M48 84 Q60 100 72 84 Z" fill={INK} />
       ) : sad ? (
         <Path d="M52 90 Q60 84 68 90" stroke={INK} strokeWidth={3} strokeLinecap="round" fill="none" />

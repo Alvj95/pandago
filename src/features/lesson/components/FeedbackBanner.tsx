@@ -23,7 +23,7 @@ export function FeedbackBanner({ correct, solution, explain, combo, onContinue }
 
   return (
     <Animated.View
-      entering={SlideInDown.springify().damping(18)}
+      entering={SlideInDown.duration(280)}
       style={[styles.sheet, { backgroundColor: correct ? c.successSoft : c.dangerSoft, padding: spacing.md, gap: spacing.sm }]}
       accessibilityLiveRegion="polite"
     >

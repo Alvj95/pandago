@@ -30,6 +30,8 @@ export function ProfileScreen() {
   const haptics = useSettingsStore((s) => s.haptics);
   const setHaptics = useSettingsStore((s) => s.setHaptics);
   const voice = useSettingsStore((s) => s.voice);
+  const reduceMotion = useSettingsStore((s) => s.reduceMotion);
+  const setReduceMotion = useSettingsStore((s) => s.setReduceMotion);
   const setVoice = useSettingsStore((s) => s.setVoice);
   const weaknesses = topWeaknesses(model);
 
@@ -131,6 +133,10 @@ export function ProfileScreen() {
             <View style={styles.between}>
               <Text style={[type.body, { color: c.textPrimary }]}>🔊 Bao habla en voz alta</Text>
               <Switch value={voice} onValueChange={setVoice} trackColor={{ true: c.success, false: c.locked }} accessibilityLabel="Bao habla en voz alta" />
+            </View>
+            <View style={styles.between}>
+              <Text style={[type.body, { color: c.textPrimary }]}>🧘 Reducir movimiento</Text>
+              <Switch value={reduceMotion} onValueChange={setReduceMotion} trackColor={{ true: c.success, false: c.locked }} accessibilityLabel="Reducir movimiento" />
             </View>
             <View style={styles.between}>
               <Text style={[type.body, { color: c.textPrimary }]}>📳 Vibración</Text>

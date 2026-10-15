@@ -6,6 +6,6 @@ export type BaoMood =
   | 'idle' // respira suavemente, parpadea
   | 'talking' // da una pista o habla en el chat
   | 'thinking' // la IA está generando respuesta
-  | 'happy' // acierto: salta
-  | 'celebrate' // racha / subida de nivel: salto + giro + destellos
-  | 'encourage'; // fallo: se estremece y anima
+  | 'happy' // acierto: saltito suave y orejas
+  | 'celebrate' // racha / fin de lección: saltito, balanceo y destellos
+  | 'encourage'; // fallo: inclina la cabeza y baja las orejas
