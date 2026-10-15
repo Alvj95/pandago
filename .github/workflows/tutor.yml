@@ -1,0 +1,53 @@
+# Publica el tutor IA gratis en Cloudflare Workers (Workers AI).
+# Requisito (una vez), en Settings → Secrets and variables → Actions:
+#   - secreto CLOUDFLARE_API_TOKEN  (plantilla «Edit Cloudflare Workers» + permiso «Workers AI: Read»)
+#   - secreto CLOUDFLARE_ACCOUNT_ID
+# Después, la variable TUTOR_URL (pestaña «Variables») con la dirección que muestra este workflow
+# hace que la app y la web se conecten al tutor.
+name: Deploy tutor
+
+on:
+  push:
+    branches: [main]
+    paths: ['server/**', 'src/features/chat/engine/**', 'src/data/hsk/**', '.github/workflows/tutor.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: tutor
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HAS_CF: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm ci
+        working-directory: server
+      - run: npm run typecheck && npm test
+        working-directory: server
+      - name: Publicar en Cloudflare
+        if: env.HAS_CF == 'true'
+        working-directory: server
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler deploy 2>&1 | tee deploy.log
+          URL=$(grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' deploy.log | head -1)
+          {
+            echo "## 🐼 Tutor publicado"
+            echo ""
+            echo "Dirección: **$URL**"
+            echo ""
+            echo "Guárdala como variable **TUTOR_URL** (Settings → Secrets and variables → Actions → Variables) para que la app la use."
+          } >> "$GITHUB_STEP_SUMMARY"
+          curl -sf "$URL/health" && echo
+      - name: Falta configurar Cloudflare
+        if: env.HAS_CF != 'true'
+        run: echo "Añade los secretos CLOUDFLARE_API_TOKEN y CLOUDFLARE_ACCOUNT_ID para publicar el tutor." >> "$GITHUB_STEP_SUMMARY"

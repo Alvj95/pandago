@@ -1,0 +1,16 @@
+# Despliegue gratis del tutor de PandaGO! en Cloudflare Workers.
+#   npx wrangler login     (una vez)
+#   npm run cf:deploy
+name = "pandago-tutor"
+main = "src/worker.ts"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[ai]
+binding = "AI"
+
+[vars]
+# Primero Qwen3 (barato y bueno en chino); si falla, Llama 3.3 70B (admite JSON mode).
+# Si Cloudflare cambia el catálogo, edita esta lista (dash.cloudflare.com → Workers AI → Models).
+TUTOR_MODELS = "@cf/qwen/qwen3-30b-a3b-fp8,@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+ASR_MODEL = "@cf/openai/whisper"

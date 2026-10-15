@@ -26,6 +26,8 @@ jobs:
       ANDROID_VERSION_CODE: ${{ github.run_number }}
       APP_VERSION: 0.1.${{ github.run_number }}
       HAS_SIGNING: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      # Dirección del tutor IA (variable del repositorio); vacía = la app usa el tutor sin conexión.
+      EXPO_PUBLIC_API_URL: ${{ vars.TUTOR_URL }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

@@ -20,3 +20,4 @@ __pycache__/
 *.keystore
 keystore.base64.txt
 SECRETOS-GITHUB.txt
+server/.wrangler/

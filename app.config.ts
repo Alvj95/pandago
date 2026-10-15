@@ -17,5 +17,5 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ...config.android,
     versionCode: Number(process.env.ANDROID_VERSION_CODE ?? config.android?.versionCode ?? 1),
   },
-  extra: { ...config.extra, apiUrl: process.env.EXPO_PUBLIC_API_URL ?? config.extra?.apiUrl },
+  extra: { ...config.extra, apiUrl: process.env.EXPO_PUBLIC_API_URL || config.extra?.apiUrl },
 });
