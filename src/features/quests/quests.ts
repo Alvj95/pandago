@@ -19,6 +19,7 @@ export type QuestEvent =
   | 'tone_perfect'
   | 'exam_pass'
   | 'story'
+  | 'pronounce' // frases practicadas con el semáforo de pronunciación
   | 'streak'; // días de racha (máximo)
 
 /** Eventos que guardan el máximo en vez de sumar. */
@@ -44,6 +45,7 @@ export const QUEST_POOL: Quest[] = [
   { id: 'challenge1', icon: '⚡', title: 'Supera un reto rápido', event: 'challenge_won', target: 1, gems: 15 },
   { id: 'tones8', icon: '🎵', title: 'Acierta 8 tonos', event: 'tone_correct', target: 8, gems: 15 },
   { id: 'story1', icon: '📖', title: 'Lee una historia con Bao', event: 'story', target: 1, gems: 15 },
+  { id: 'pron5', icon: '🎙️', title: 'Practica pronunciación 5 frases', event: 'pronounce', target: 5, gems: 20 },
 ];
 
 export const WEEKLY_QUEST: Quest = { id: 'week300', icon: '🏆', title: 'Gana 300 XP esta semana', event: 'xp', target: 300, gems: 100 };

@@ -102,6 +102,32 @@ export function PracticeScreen() {
           </Card>
         </PressableScale>
 
+        <Text style={[type.caption, { color: c.textSecondary, marginTop: spacing.sm }]}>HABLAR CON BAO</Text>
+        <PressableScale onPress={() => router.push('/call')} accessibilityRole="button" accessibilityLabel="Llamada con Bao">
+          <Card index={4} tint="#1B1F2A" style={{ borderColor: c.info }}>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <Text style={styles.icon}>📞</Text>
+              <View style={styles.flex}>
+                <Text style={[type.title, styles.onBrand]}>Llamada con Bao</Text>
+                <Text style={[type.body, styles.onBrand]}>Solo voz, como una llamada de verdad. Con subtítulos si te pierdes</Text>
+              </View>
+              <Text style={[type.title, styles.onBrand]}>›</Text>
+            </View>
+          </Card>
+        </PressableScale>
+        <PressableScale onPress={() => router.push('/pronunciation')} accessibilityRole="button" accessibilityLabel="Pronunciación con semáforo">
+          <Card index={5}>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <Text style={styles.icon}>🚦</Text>
+              <View style={styles.flex}>
+                <Text style={[type.title, { color: c.textPrimary }]}>Pronunciación con semáforo</Text>
+                <Text style={[type.body, { color: c.textSecondary }]}>Repite 8 frases: cada sílaba en 🟢 verde, 🟡 amarillo o 🔴 rojo</Text>
+              </View>
+              <Text style={[type.title, { color: c.textSecondary }]}>›</Text>
+            </View>
+          </Card>
+        </PressableScale>
+
         <Text style={[type.caption, { color: c.textSecondary, marginTop: spacing.sm }]}>PRONUNCIAR</Text>
         <PressableScale onPress={() => router.push('/tones')} accessibilityRole="button" accessibilityLabel="Entrenador de tonos">
           <Card index={5} tint={c.info} style={{ borderColor: c.info }}>

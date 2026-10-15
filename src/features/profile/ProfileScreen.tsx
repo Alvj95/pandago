@@ -1,7 +1,8 @@
 import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bao } from '@/components/mascot';
-import { Card, ProgressBar, Segmented } from '@/components/ui';
+import { useRouter } from 'expo-router';
+import { Button3D, Card, ProgressBar, Segmented } from '@/components/ui';
 import { DIMENSIONS, levelDifficulty, pCorrect, topWeaknesses, type Dimension } from '@/features/learning/adaptive/learnerModel';
 import { useLearnerStore } from '@/store/useLearnerStore';
 import { useProgressStore } from '@/store/useProgressStore';
@@ -26,6 +27,7 @@ const humanizeTag = (tag: string) => {
 };
 
 export function ProfileScreen() {
+  const router = useRouter();
   const { c, type, spacing, preference, setPreference } = useTheme();
   const p = useProgressStore();
   const model = useLearnerStore((s) => s.model);
@@ -57,6 +59,15 @@ export function ProfileScreen() {
           <Text style={[type.caption, { color: c.textSecondary }]}>
             HSK {p.hskLevel} · Liga {p.league}
           </Text>
+        </View>
+
+        <View style={[styles.grid, { gap: spacing.sm }]}>
+          <View style={styles.cell}>
+            <Button3D label="👕 Vestir a Bao" variant="ghost" onPress={() => router.push('/wardrobe')} />
+          </View>
+          <View style={styles.cell}>
+            <Button3D label="🛍️ Tienda" onPress={() => router.push('/shop')} />
+          </View>
         </View>
 
         <View style={[styles.grid, { gap: spacing.sm }]}>

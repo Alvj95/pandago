@@ -5,6 +5,7 @@ import type { HskLevel, LessonNode } from '@/data/hsk/types';
 import { MAX_FREEZES, type ChestReward } from '@/features/rewards/chest';
 import { MAX_CHALLENGE_HEARTS_PER_DAY } from '@/features/challenges/engine';
 import { trackQuest } from './useQuestStore';
+import { DOUBLE_XP_MS } from '@/features/shop/items';
 import type { League } from '@/features/leagues/leaderboard';
 
 export const MAX_HEARTS = 5;
@@ -30,6 +31,8 @@ export interface ProgressState {
   pendingChests: number;
   /** Vidas ganadas hoy con retos (máx. MAX_CHALLENGE_HEARTS_PER_DAY). */
   challengeHearts: { day: string; count: number };
+  /** Hasta cuándo dura el «Doble XP» comprado en la tienda (ms). */
+  doubleXpUntil: number;
 
   awardXp: (amount: number) => void;
   setDailyGoal: (xp: number) => void;
@@ -48,6 +51,8 @@ export interface ProgressState {
   challengeHeartsLeft: (now?: number) => number;
   /** Suma 1 vida por reto superado si quedan hoy y no estás al máximo; devuelve si se sumó. */
   winChallengeHeart: (now?: number) => boolean;
+  /** Compra una ayuda de la tienda; false si no hay gemas o no tiene sentido ahora. */
+  buyHelper: (id: 'freeze' | 'refill' | 'double-xp', price: number, now?: number) => boolean;
   /** Llamar al abrir la app: regenera vidas y rompe/conserva la racha. */
   tick: (now?: number) => void;
 }
@@ -72,10 +77,12 @@ export const useProgressStore = create<ProgressState>()(
       completedNodeIds: [],
       pendingChests: 0,
       challengeHearts: { day: '', count: 0 },
+      doubleXpUntil: 0,
 
-      awardXp: (amount) => {
+      awardXp: (base) => {
         const today = dayKey(Date.now());
         const s = get();
+        const amount = Date.now() < s.doubleXpUntil ? base * 2 : base;
         const firstActivityToday = s.lastActiveDay !== today;
         const before = firstActivityToday ? 0 : s.xpToday;
         // Cumplir la meta diaria por primera vez hoy regala un cofre.
@@ -124,6 +131,18 @@ export const useProgressStore = create<ProgressState>()(
         })),
 
       earnGems: (amount) => set((s) => ({ gems: s.gems + amount })),
+
+      buyHelper: (id, price, now = Date.now()) => {
+        const s = get();
+        if (id === 'freeze' && s.streakFreezes >= MAX_FREEZES) return false;
+        if (id === 'refill' && s.hearts >= MAX_HEARTS) return false;
+        if (id === 'double-xp' && now < s.doubleXpUntil) return false;
+        if (!s.spendGems(price)) return false;
+        if (id === 'freeze') set({ streakFreezes: s.streakFreezes + 1 });
+        if (id === 'refill') set({ hearts: MAX_HEARTS, heartsUpdatedAt: now });
+        if (id === 'double-xp') set({ doubleXpUntil: now + DOUBLE_XP_MS });
+        return true;
+      },
 
       addPendingChest: () => set((s) => ({ pendingChests: s.pendingChests + 1 })),
 

@@ -43,3 +43,22 @@ export const ALL_SCENARIOS: { scenario: Scenario; icon: string; unitTitle: strin
       .map((n) => ({ scenario: scenarioForNode(n.id), icon: n.scenario?.persona === 'native' ? '🧑' : '🐼', unitTitle: `HSK ${u.level} · Unidad ${u.index}`, nodeId: n.id })),
   ),
 ];
+
+/**
+ * Llamada con Bao: charla solo por voz sobre el tema de la unidad en la que vas
+ * (la primera con nodos sin completar).
+ */
+export function callScenario(completedIds: string[]): Scenario {
+  const unit = UNITS.find((u) => u.nodes.some((n) => !completedIds.includes(n.id))) ?? UNITS[UNITS.length - 1]!;
+  const node = unit.nodes.find((n) => n.kind === 'conversation');
+  const base = node ? scenarioForNode(node.id) : FREE_TALK;
+  return {
+    ...base,
+    id: `call-${unit.id}`,
+    title: `Llamada · ${unit.title}`,
+    persona: 'bao',
+    role: undefined,
+    goal: `Llamada de voz con Bao (frases cortas y naturales, como al teléfono). Tema: ${base.goal}`,
+    max_turns: 8,
+  };
+}

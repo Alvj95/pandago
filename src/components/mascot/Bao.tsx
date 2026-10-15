@@ -13,13 +13,18 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
+import type { Outfit } from '@/features/shop/items';
 import { useSettingsStore } from '@/store/useSettingsStore';
+import { useShopStore } from '@/store/useShopStore';
 import { BaoFace, CREAM, FUR, INK } from './BaoFace';
+import { OutfitLayer } from './OutfitLayer';
 import type { BaoMood } from './types';
 
 interface Props {
   mood?: BaoMood;
   size?: number;
+  /** Ropa a mostrar; por defecto, la que el usuario le ha puesto en la tienda. */
+  outfit?: Outfit;
 }
 
 /** Curva suave (seno) para todo: sin rebotes ni resortes, que marean. */
@@ -41,7 +46,8 @@ const OPEN_EYES: Record<BaoMood, { cx: number; cy: number; r: number } | null> =
  * ninguno se repite durante la lección salvo respirar y parpadear. Con
  * «Reducir movimiento» (en Perfil o en el sistema) solo cambia la expresión.
  */
-export function Bao({ mood = 'idle', size = 96 }: Props) {
+export function Bao({ mood = 'idle', size = 96, outfit }: Props) {
+  const worn = useShopStore((s) => s.outfit);
   const systemReduce = useReducedMotion();
   const userReduce = useSettingsStore((s) => s.reduceMotion);
   const still = systemReduce || userReduce;
@@ -181,6 +187,8 @@ export function Bao({ mood = 'idle', size = 96 }: Props) {
             style={[styles.abs, { left: 54 * k, top: 84 * k, width: 12 * k, height: 10 * k, borderRadius: 6 * k, backgroundColor: INK }, mouthStyle]}
           />
         )}
+
+        <OutfitLayer outfit={outfit ?? worn} size={size} />
       </Animated.View>
     </View>
   );

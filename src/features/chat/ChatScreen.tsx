@@ -23,7 +23,7 @@ import type { LessonNode } from '@/data/hsk/types';
 import { LOCAL_CONTENT } from '@/features/lesson/content';
 import { createRng } from '@/features/lesson/engine/random';
 import { createOfflineTutor, type OfflineTutor } from './engine/offlineTutor';
-import { applySandhi, scoreSyllables, toneTip, tonesFromPinyin } from './engine/tones';
+import { gradeScore, gradeSyllables, lightsLine } from '@/features/pronunciation/grade';
 
 export function ChatScreen({ scenario, node }: { scenario: Scenario; node?: LessonNode }) {
   const { c, spacing, type } = useTheme();
@@ -170,15 +170,16 @@ export function ChatScreen({ scenario, node }: { scenario: Scenario; node?: Less
     }
     try {
       let score = 1;
+      let lights: string | null = null;
       if (target) {
-        const hanzi = [...target.hanzi].filter((ch) => /\p{Script=Han}/u.test(ch));
-        // Tonos esperados = léxicos (del pinyin) + sandhi; así 你好 se evalúa como ní hǎo.
-        const syllables = scoreSyllables(hanzi, applySandhi(hanzi, tonesFromPinyin(target.pinyin, hanzi.length)), result.syllables);
-        score = syllables.reduce((a, s) => a + s.score, 0) / Math.max(1, syllables.length);
-        const tip = toneTip(syllables);
-        if (tip) record({ itemId: `tones:${expected}`, dimension: 'tones', score, difficulty: 0, errorTags: ['tones:contour'] });
+        // Semáforo por sílaba: 🟢 se entendió · 🟡 tono cambiado · 🔴 no se oyó.
+        const graded = gradeSyllables(target.hanzi, target.pinyin, result);
+        score = gradeScore(graded);
+        lights = lightsLine(graded);
+        if (graded.some((g) => g.light === 'yellow')) record({ itemId: `tones:${expected}`, dimension: 'tones', score, difficulty: 0, errorTags: ['tones:contour'] });
       }
       void send({ kind: 'voice', transcript: result.transcript, pronunciation_score: score }, `🎙️ ${result.transcript}`);
+      if (lights) dispatch({ type: 'notice', text: lights });
     } catch {
       dispatch({ type: 'voice_failed', message: '🙉 No te he entendido bien. ¿Lo intentamos otra vez?' });
     }

@@ -17,7 +17,7 @@ export function TopStatusBar({ onPressLevel }: { onPressLevel?: () => void }) {
         <Text style={[type.caption, { color: c.primary }]}>🇨🇳 HSK {hskLevel}</Text>
       </View>
       <StatPill icon={streakActiveToday ? '🔥' : '🩶'} value={streakDays} color={streakActiveToday ? c.streak : c.textSecondary} label="Racha" />
-      <StatPill icon="💎" value={gems} color={c.info} label="Gemas" />
+      <StatPill icon="💎" value={gems} color={c.info} label="Gemas (toca para ir a la tienda de Bao)" onPress={() => router.push('/shop')} />
       <StatPill icon="❤️" value={hearts} color={c.danger} label={hearts < MAX_HEARTS ? 'Vidas (toca para ganar una con un reto)' : 'Vidas'} onPress={hearts < MAX_HEARTS ? () => router.push('/challenge') : undefined} />
     </View>
   );
