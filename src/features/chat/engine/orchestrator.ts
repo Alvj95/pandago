@@ -40,7 +40,9 @@ export type ChatAction =
   | { type: 'record_stop' }
   | { type: 'fail'; message: string }
   /** Aviso informativo en el chat que no interrumpe la conversación. */
-  | { type: 'notice'; text: string };
+  | { type: 'notice'; text: string }
+  /** No se pudo usar la grabación (permiso, demasiado corta, sin voz, sin servicio). */
+  | { type: 'voice_failed'; message: string };
 
 let seq = 0;
 const id = () => `m${Date.now().toString(36)}${(seq++).toString(36)}`;
@@ -107,6 +109,15 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
 
     case 'notice':
       return { ...state, messages: [...state.messages, { id: id(), from: 'system', text: action.text }] };
+
+    case 'voice_failed':
+      // Un fallo del micrófono no rompe la conversación: se vuelve a la misma tarea.
+      return {
+        ...state,
+        phase: 'await_user',
+        mood: 'encourage',
+        messages: [...state.messages, { id: id(), from: 'system', text: action.message }],
+      };
   }
 }
 

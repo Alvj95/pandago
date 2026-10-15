@@ -116,23 +116,59 @@ export function ChatScreen({ scenario, node }: { scenario: Scenario; node?: Less
     void send({ kind: 'gap_choice', choice }, choice);
   };
 
-  const onMicDown = async () => {
-    const perm = await requestRecordingPermissionsAsync();
-    if (!perm.granted) return;
-    await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
-    await recorder.prepareToRecordAsync();
-    recorder.record();
-    dispatch({ type: 'record_start' });
+  const recordStartedAt = useRef(0);
+
+  /** Toca para empezar a grabar y otra vez para terminar (más fiable que mantener pulsado). */
+  const onMic = async () => {
+    if (state.phase === 'recording') return stopAndAssess();
+    if (state.phase !== 'await_user') return;
+    try {
+      const perm = await requestRecordingPermissionsAsync();
+      if (!perm.granted) {
+        dispatch({ type: 'voice_failed', message: '🎙️ Necesito permiso para usar el micrófono. Actívalo en Ajustes → Aplicaciones → PandaGO! → Permisos.' });
+        return;
+      }
+      stopSpeaking(); // que Bao no hable mientras grabas
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+      recordStartedAt.current = Date.now();
+      dispatch({ type: 'record_start' });
+    } catch {
+      dispatch({ type: 'voice_failed', message: '🎙️ No he podido abrir el micrófono. Cierra otras apps que lo estén usando y vuelve a intentarlo.' });
+    }
   };
 
-  const onMicUp = async () => {
-    if (state.phase !== 'recording') return;
-    await recorder.stop();
+  const stopAndAssess = async () => {
+    const seconds = (Date.now() - recordStartedAt.current) / 1000;
+    try {
+      await recorder.stop();
+    } catch {
+      // si ya estaba parado, seguimos con lo grabado
+    }
+    await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+    if (seconds < 0.8) {
+      dispatch({ type: 'voice_failed', message: '🎙️ Ha sido muy corto. Toca el micrófono, di la frase y vuelve a tocar para terminar.' });
+      return;
+    }
     dispatch({ type: 'record_stop' });
     const target = state.task?.type === 'repeat_aloud' ? state.task : null;
     const expected = target?.hanzi ?? '';
+    let result: Awaited<ReturnType<typeof assessPronunciation>>;
     try {
-      const result = await assessPronunciation(recorder.uri ?? '', expected, await getAuthToken());
+      result = await assessPronunciation(recorder.uri ?? '', expected, await getAuthToken());
+    } catch {
+      dispatch({
+        type: 'voice_failed',
+        message: '🎙️ El reconocimiento de voz no está disponible ahora mismo (sin conexión o se acabó la cuota del día). Puedes escribir tu respuesta.',
+      });
+      return;
+    }
+    if (!/\p{Script=Han}/u.test(result.transcript)) {
+      dispatch({ type: 'voice_failed', message: '🙉 No he oído nada en chino. Habla más cerca del micrófono y un poco más alto.' });
+      return;
+    }
+    try {
       let score = 1;
       if (target) {
         const hanzi = [...target.hanzi].filter((ch) => /\p{Script=Han}/u.test(ch));
@@ -142,9 +178,9 @@ export function ChatScreen({ scenario, node }: { scenario: Scenario; node?: Less
         const tip = toneTip(syllables);
         if (tip) record({ itemId: `tones:${expected}`, dimension: 'tones', score, difficulty: 0, errorTags: ['tones:contour'] });
       }
-      void send({ kind: 'voice', transcript: result.transcript, pronunciation_score: score }, result.transcript);
+      void send({ kind: 'voice', transcript: result.transcript, pronunciation_score: score }, `🎙️ ${result.transcript}`);
     } catch {
-      dispatch({ type: 'fail', message: 'No te he oído bien 🙉 ¿Lo intentamos otra vez?' });
+      dispatch({ type: 'voice_failed', message: '🙉 No te he entendido bien. ¿Lo intentamos otra vez?' });
     }
   };
 
@@ -198,8 +234,7 @@ export function ChatScreen({ scenario, node }: { scenario: Scenario; node?: Less
               recording={state.phase === 'recording'}
               onText={(t) => void send({ kind: 'text', text: t }, t)}
               onGap={onGap}
-              onMicDown={() => void onMicDown()}
-              onMicUp={() => void onMicUp()}
+              onMic={() => void onMic()}
             />
           )}
         </View>

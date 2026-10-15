@@ -74,6 +74,16 @@ describe('tutor gratis (Workers AI)', () => {
     await assert.rejects(tutor.assess!(new ArrayBuffer(10), '你好'));
   });
 
+  it('voz: si un reconocedor devuelve romanización, prefiere el que escribe en chino', async () => {
+    const ai = {
+      run: async (model: string) => ({ text: model === 'a' ? 'Ni3,HeyO3' : '你好' }),
+    };
+    const r = await createWorkersAiTutor(ai, ['m'], 'a,b').assess!(new ArrayBuffer(5000), '你好');
+    assert.equal(r.transcript, '你好');
+    const solo = await createWorkersAiTutor(ai, ['m'], 'a').assess!(new ArrayBuffer(5000), '你好');
+    assert.equal(solo.transcript, 'Ni3,HeyO3');
+  });
+
   it('alinea la transcripción con la frase y aplica el cambio de tono', () => {
     const r = alignTranscript('你好吗', '你好！');
     assert.deepEqual(r.syllables.map((s) => s.tone), [2, 3]); // 你好 se dice 2+3

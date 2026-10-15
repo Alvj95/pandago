@@ -3,6 +3,7 @@
  * proveedor del LLM: la API key vive en el servidor, que además aplica límites
  * de uso, moderación y caché.
  */
+import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { TutorTurn, type TurnRequest } from './contract';
 
@@ -33,18 +34,27 @@ export interface PronunciationResult {
 }
 
 /**
- * Sube la grabación (m4a/16 kHz mono) al servicio de voz: ASR en mandarín +
- * alineamiento forzado contra la frase esperada + clasificación de tono por F0.
+ * Sube la grabación (m4a en el móvil, webm en la web) al servicio de voz, que
+ * la transcribe en mandarín y la compara con la frase esperada (si la hay).
  */
 export async function assessPronunciation(audioUri: string, expectedHanzi: string, authToken: string): Promise<PronunciationResult> {
   const form = new FormData();
   form.append('expected', expectedHanzi);
-  form.append('audio', { uri: audioUri, name: 'take.m4a', type: 'audio/m4a' } as unknown as Blob);
+  if (Platform.OS === 'web') {
+    // En la web la grabación es una URL blob: hay que adjuntar el archivo real.
+    const blob = await (await fetch(audioUri)).blob();
+    form.append('audio', blob, 'take.webm');
+  } else {
+    form.append('audio', { uri: audioUri, name: 'take.m4a', type: 'audio/m4a' } as unknown as Blob);
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 25_000);
   const res = await fetch(`${API_URL}/v1/speech/assess`, {
     method: 'POST',
     headers: { authorization: `Bearer ${authToken}` },
     body: form,
-  });
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timer));
   if (!res.ok) throw new TutorUnavailableError(`speech ${res.status}`);
   return (await res.json()) as PronunciationResult;
 }

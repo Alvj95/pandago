@@ -122,16 +122,21 @@ export function createWorkersAiTutor(ai: AiBinding, models: string[], asrModel: 
     turn: (req) => withLevelGuard(call, req),
     assess: async (audio, expected) => {
       if (audio.byteLength < 2000) throw new Error('audio vacío o demasiado corto');
-      // Se prueban los reconocedores en orden: el primero que devuelva texto gana.
+      // Se prueban los reconocedores en orden: gana el primero que escriba caracteres
+      // chinos (a veces Whisper devuelve pinyin o romanización en lugar de hanzi).
       let lastError: unknown = null;
+      let fallback: string | null = null;
       for (const model of asrModel.split(',').map((m) => m.trim()).filter(Boolean)) {
         try {
           const out = (await ai.run(model, asrInput(model, audio))) as { text?: string };
-          return alignTranscript(str(out?.text), expected);
+          const text = str(out?.text).trim();
+          if (HAN.test(text)) return alignTranscript(text, expected);
+          fallback ??= text;
         } catch (err) {
           lastError = err;
         }
       }
+      if (fallback !== null) return alignTranscript(fallback, expected);
       throw lastError instanceof Error ? lastError : new Error('asr: sin respuesta');
     },
   };
@@ -148,12 +153,11 @@ function toBase64(buf: ArrayBuffer): string {
 
 /**
  * Cada reconocedor de Workers AI espera el audio de una forma: whisper-large-v3-turbo
- * en base64 (y admite idioma y una frase guía que le hace escribir en chino
- * simplificado); el whisper clásico, como lista de bytes.
+ * en base64 (con el idioma fijado en chino); el whisper clásico, como lista de bytes.
  */
 export function asrInput(model: string, audio: ArrayBuffer): Record<string, unknown> {
   if (model.includes('large-v3-turbo')) {
-    return { audio: toBase64(audio), language: 'zh', initial_prompt: '以下是普通话的句子，使用简体中文。' };
+    return { audio: toBase64(audio), language: 'zh', task: 'transcribe' };
   }
   return { audio: [...new Uint8Array(audio)] };
 }

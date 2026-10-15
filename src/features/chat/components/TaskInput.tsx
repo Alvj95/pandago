@@ -12,12 +12,12 @@ interface Props {
   recording: boolean;
   onText: (text: string) => void;
   onGap: (choice: string) => void;
-  onMicDown: () => void;
-  onMicUp: () => void;
+  /** Un toque empieza a grabar; otro toque termina. */
+  onMic: () => void;
 }
 
 /** La zona de entrada cambia según la tarea que pidió la IA: pregunta abierta, hueco o repetir en voz alta. */
-export function TaskInput({ task, disabled, recording, onText, onGap, onMicDown, onMicUp }: Props) {
+export function TaskInput({ task, disabled, recording, onText, onGap, onMic }: Props) {
   const { c, radius, type, spacing } = useTheme();
   const [text, setText] = useState('');
   const pulse = useSharedValue(1);
@@ -28,9 +28,14 @@ export function TaskInput({ task, disabled, recording, onText, onGap, onMicDown,
   const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
 
   const mic = (
-    <PressableScale onPressIn={onMicDown} onPressOut={onMicUp} disabled={disabled && !recording} accessibilityLabel="Mantén pulsado para hablar">
+    <PressableScale
+      onPress={onMic}
+      disabled={disabled && !recording}
+      accessibilityRole="button"
+      accessibilityLabel={recording ? 'Terminar de grabar' : 'Grabar tu voz'}
+    >
       <Animated.View style={[styles.mic, { backgroundColor: recording ? c.danger : c.info }, pulseStyle]}>
-        <Text style={styles.micIcon}>🎙️</Text>
+        <Text style={styles.micIcon}>{recording ? '⏹' : '🎙️'}</Text>
       </Animated.View>
     </PressableScale>
   );
@@ -54,7 +59,18 @@ export function TaskInput({ task, disabled, recording, onText, onGap, onMicDown,
         <Text style={[type.hanzi, { color: c.primary }]}>{task.hanzi}</Text>
         <Text style={[type.caption, { color: c.textSecondary }]}>{task.pinyin}</Text>
         {mic}
-        <Text style={[type.caption, { color: c.textSecondary }]}>{recording ? 'Escuchando…' : 'Mantén pulsado y repite'}</Text>
+        <Text style={[type.caption, { color: recording ? c.danger : c.textSecondary }]}>
+          {recording ? '🔴 Grabando… toca ⏹ al terminar' : 'Toca 🎙️ y repite la frase'}
+        </Text>
+      </View>
+    );
+  }
+
+  if (recording) {
+    return (
+      <View style={[styles.row, { gap: spacing.sm, justifyContent: 'center' }]}>
+        <Text style={[type.body, { color: c.danger }]}>🔴 Grabando… habla en chino y toca ⏹</Text>
+        {mic}
       </View>
     );
   }
