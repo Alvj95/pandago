@@ -39,7 +39,7 @@ export function createApp<E extends object>(getTutor: (env: E) => Tutor) {
       if (err instanceof TutorRefusedError) return c.json({ error: 'refused' }, 422);
       console.error(err);
       // La app pasa a su tutor sin conexión con cualquier error.
-      return c.json({ error: 'tutor_unavailable' }, 502);
+      return c.json({ error: 'tutor_unavailable', detail: String(err).slice(0, 300) }, 502);
     }
   });
 

@@ -47,7 +47,32 @@ jobs:
             echo ""
             echo "Guárdala como variable **TUTOR_URL** (Settings → Secrets and variables → Actions → Variables) para que la app la use."
           } >> "$GITHUB_STEP_SUMMARY"
-          curl -sf "$URL/health" && echo
+          echo "URL=$URL" >> "$GITHUB_ENV"
+      - name: Probar el tutor
+        if: env.HAS_CF == 'true'
+        run: |
+          # Una dirección nueva de workers.dev tarda un poco en estar disponible.
+          for i in $(seq 1 18); do curl -sf "$URL/health" && break; sleep 10; done
+          echo
+          cat > turn.json <<'JSON'
+          {"scenario":{"id":"u1-ai","title":"Saludos","goal":"Preséntate y pregunta su nombre a Bao","persona":"bao","target_item_ids":["h1-你好","h1-叫","h1-名字"],"max_turns":6},
+           "learner":{"hsk_level":1,"native_language":"español","weaknesses":[],"known_item_ids":[],"session_target_p":0.8},
+           "history":[{"role":"tutor","text":"你好！你叫什么名字？"}],
+           "input":{"kind":"text","text":"我叫是Ana"}}
+          JSON
+          RES=$(curl -s -w '\n%{http_code}' -X POST "$URL/v1/tutor/turn" -H 'content-type: application/json' --data @turn.json)
+          CODE=$(echo "$RES" | tail -1)
+          BODY=$(echo "$RES" | sed '$d')
+          echo "$BODY"
+          {
+            echo ""
+            echo "### Prueba de conversación (HTTP $CODE)"
+            echo ""
+            echo '```json'
+            echo "$BODY"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          test "$CODE" = "200"
       - name: Falta configurar Cloudflare
         if: env.HAS_CF != 'true'
         run: echo "Añade los secretos CLOUDFLARE_API_TOKEN y CLOUDFLARE_ACCOUNT_ID para publicar el tutor." >> "$GITHUB_STEP_SUMMARY"
