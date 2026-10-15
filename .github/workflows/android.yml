@@ -54,6 +54,20 @@ jobs:
       # Genera el proyecto nativo android/ a partir de app.json (no se versiona).
       - run: npx expo prebuild --platform android --no-install
 
+      # NDK que pide React Native (gradle/libs.versions.toml). Se instala antes con
+      # reintentos: si Gradle lo descarga y el archivo llega corrupto, la compilación falla.
+      - name: Install NDK
+        run: |
+          NDK=$(grep -oP 'ndkVersion = "\K[^"]+' node_modules/react-native/gradle/libs.versions.toml)
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          for i in 1 2 3; do
+            if [ -f "$ANDROID_HOME/ndk/$NDK/source.properties" ]; then echo "NDK $NDK listo"; exit 0; fi
+            rm -rf "$ANDROID_HOME/ndk/$NDK" "$ANDROID_HOME/.temp" "$ANDROID_HOME/temp"
+            yes | "$SDKM" --install "ndk;$NDK" > /dev/null || true
+            sleep $((i * 10))
+          done
+          test -f "$ANDROID_HOME/ndk/$NDK/source.properties"
+
       # Caché de Gradle (dependencias y wrapper) una vez generado android/.
       - uses: gradle/actions/setup-gradle@v4
 
