@@ -95,6 +95,28 @@ jobs:
             { echo ""; echo "### Voz (esperado: '$EXPECTED') → HTTP $CODE"; echo '```json'; echo "$BODY"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
             test "$CODE" = "200"
           done
+      - name: Probar la voz de Bao y «Pregúntale a Bao»
+        if: env.HAS_CF == 'true'
+        continue-on-error: true
+        run: |
+          CODE=$(curl -s -o bao.mp3 -w '%{http_code}' -G "$URL/v1/speech/tts" --data-urlencode "text=你好，我是宝宝！")
+          SIZE=$(stat -c %s bao.mp3)
+          TYPE=$(file -b bao.mp3)
+          echo "voz → HTTP $CODE, $SIZE bytes, $TYPE"
+          RES=$(curl -s -w '\n%{http_code}' -X POST "$URL/v1/tutor/ask" -H 'content-type: application/json' \
+            --data '{"question":"¿Por qué va 了?","context":{"hanzi":"我吃了饭。","pinyin":"wǒ chī le fàn","translation":"Ya he comido."},"hsk_level":1}')
+          ASK_CODE=$(echo "$RES" | tail -1)
+          echo "pregunta → HTTP $ASK_CODE $(echo "$RES" | sed '$d')"
+          {
+            echo ""
+            echo "### Voz de Bao → HTTP $CODE ($SIZE bytes, $TYPE)"
+            echo ""
+            echo "### Pregúntale a Bao → HTTP $ASK_CODE"
+            echo '```json'
+            echo "$RES" | sed '$d'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          test "$CODE" = "200" && test "$SIZE" -gt 2000 && test "$ASK_CODE" = "200"
       - name: Falta configurar Cloudflare
         if: env.HAS_CF != 'true'
         run: echo "Añade los secretos CLOUDFLARE_API_TOKEN y CLOUDFLARE_ACCOUNT_ID para publicar el tutor." >> "$GITHUB_STEP_SUMMARY"

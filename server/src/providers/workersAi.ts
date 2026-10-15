@@ -12,7 +12,8 @@ import { z } from 'zod';
 import { applySandhi, type Tone } from '../../../src/features/chat/engine/tones.ts';
 import { TutorTurn, type TurnRequest } from '../../../src/features/chat/engine/contract.ts';
 import { buildSystemPrompt, buildUserTurn } from '../promptBuilder.ts';
-import { type PronunciationResult, type Tutor, withLevelGuard } from '../tutor.ts';
+import { type AskRequest, type PronunciationResult, type Tutor, withLevelGuard } from '../tutor.ts';
+import { CHAR_PINYIN } from '../data/charPinyin.ts';
 import { vocabForLevel } from '../vocab.ts';
 
 /** Lo mínimo que usamos del binding `env.AI` de Workers. */
@@ -96,7 +97,7 @@ function responseOf(out: unknown): unknown {
   return typeof r === 'string' ? extractJson(r) : r;
 }
 
-export function createWorkersAiTutor(ai: AiBinding, models: string[], asrModel: string): Tutor {
+export function createWorkersAiTutor(ai: AiBinding, models: string[], asrModel: string, ttsModel = '@cf/myshell-ai/melotts'): Tutor {
   const call = async (req: TurnRequest, extra?: string) => {
     const messages = [
       { role: 'system', content: buildSystemPrompt(req.scenario.persona, req.learner.hsk_level, req.learner.native_language) + FORMAT },
@@ -139,7 +140,67 @@ export function createWorkersAiTutor(ai: AiBinding, models: string[], asrModel: 
       if (fallback !== null) return alignTranscript(fallback, expected);
       throw lastError instanceof Error ? lastError : new Error('asr: sin respuesta');
     },
+    tts: async (text) => audioOf(await ai.run(ttsModel, { prompt: text, lang: 'zh' })),
+    ask: async (req) => {
+      const messages = [
+        { role: 'system', content: askSystemPrompt(req.hsk_level) },
+        { role: 'user', content: askUserTurn(req) },
+      ];
+      let lastError: unknown = null;
+      for (const model of models) {
+        try {
+          const out = await ai.run(model, { messages, max_tokens: 700, temperature: 0.3 });
+          const answer = cleanAnswer(str((out as { response?: unknown } | null)?.response ?? out));
+          if (answer) return { answer };
+        } catch (err) {
+          lastError = err;
+        }
+      }
+      throw lastError instanceof Error ? lastError : new Error('ask: sin respuesta');
+    },
   };
+}
+
+// ---------------------------------------------------------------- Pregúntale a Bao
+
+export function askSystemPrompt(level: number): string {
+  return `Eres Bao, un panda rojo que enseña chino mandarín a hispanohablantes (nivel HSK ${level}).
+Responde en español, cálido y claro, en 2-5 frases cortas (máximo 90 palabras).
+Cuando des un ejemplo en chino, escríbelo así: 汉字 (pīnyīn) «traducción». Usa como mucho 2 ejemplos y vocabulario de nivel HSK ${level}.
+No uses Markdown (ni asteriscos ni listas). Si la pregunta no tiene que ver con aprender chino, recondúcela con amabilidad.`;
+}
+
+export function askUserTurn(req: AskRequest): string {
+  const ctx = req.context
+    ? `Frase de la lección: ${req.context.hanzi}${req.context.pinyin ? ` (${req.context.pinyin})` : ''}${req.context.translation ? ` «${req.context.translation}»` : ''}\n`
+    : '';
+  // «/no_think» evita que Qwen3 gaste la respuesta en razonamientos.
+  return `${ctx}Pregunta del estudiante: ${req.question.slice(0, 300)} /no_think`;
+}
+
+/** Quita razonamientos <think>, Markdown y espacios sobrantes de una respuesta libre. */
+export function cleanAnswer(text: string): string {
+  return text
+    .replace(/<think>[\s\S]*?<\/think>/g, '')
+    .replace(/<think>[\s\S]*$/, '')
+    .replace(/<\/think>/g, '')
+    .replace(/\*\*?|__|^#+\s*/gm, '')
+    .trim()
+    .slice(0, 900);
+}
+
+// ---------------------------------------------------------------- Voz de Bao
+
+/** MeloTTS devuelve el mp3 en base64 (`{ audio }`) o, según la versión, en binario. */
+export function audioOf(out: unknown): ArrayBuffer {
+  if (out instanceof ArrayBuffer) return out;
+  if (out instanceof Uint8Array) return out.slice().buffer;
+  const b64 = (out as { audio?: unknown } | null)?.audio;
+  if (typeof b64 !== 'string' || !b64) throw new Error('tts: sin audio');
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
 }
 
 // ---------------------------------------------------------------- Pronunciación (aproximada)
@@ -179,11 +240,33 @@ export function charTones(hanzi: string): (Tone | null)[] {
   return out;
 }
 
+const READINGS = new Map<string, string[]>();
+for (const entry of CHAR_PINYIN.split(' ')) {
+  const ch = String.fromCodePoint(entry.codePointAt(0)!);
+  READINGS.set(ch, entry.slice(ch.length).split('|'));
+}
+const toneOf = (r: string) => Number(r.slice(-1)) as Tone;
+const baseOf = (r: string) => r.slice(0, -1);
+
+/**
+ * Compara una sílaba esperada con la que oyó el reconocedor (cuando no es el
+ * mismo carácter): un homófono con el mismo tono cuenta como bien dicho; la
+ * misma sílaba con otro tono, como «tono cambiado».
+ */
+export function compareSyllable(expected: string, expectedTones: Tone[], heard: string): 'ok' | 'tone' | 'miss' {
+  const exp = READINGS.get(expected) ?? [];
+  const got = READINGS.get(heard) ?? [];
+  const bases = new Set(exp.map(baseOf));
+  const same = got.filter((r) => bases.has(baseOf(r)));
+  if (!same.length) return 'miss';
+  return same.some((r) => expectedTones.includes(toneOf(r)) || expectedTones.includes(5)) ? 'ok' : 'tone';
+}
+
 /**
  * Compara lo que entendió el reconocedor de voz con la frase esperada. No mide
- * el contorno de tono: si el carácter se reconoce, se da por bien dicho (con
- * confianza media), porque un tono equivocado suele hacer que el reconocedor
- * entienda otra palabra. Es una aproximación honesta hasta tener un modelo de tonos.
+ * el contorno de tono: si el carácter (o un homófono con el mismo tono) se
+ * reconoce, se da por bien dicho; si se oyó la misma sílaba con otro tono, se
+ * marca como «tono cambiado». Es una aproximación honesta hasta tener un modelo de tonos.
  */
 export function alignTranscript(transcript: string, expected: string): PronunciationResult {
   const exp = [...expected].filter((ch) => HAN.test(ch));
@@ -192,23 +275,38 @@ export function alignTranscript(transcript: string, expected: string): Pronuncia
   const dp = Array.from({ length: exp.length + 1 }, () => new Array<number>(got.length + 1).fill(0));
   for (let i = exp.length - 1; i >= 0; i--)
     for (let j = got.length - 1; j >= 0; j--) dp[i]![j] = exp[i] === got[j] ? dp[i + 1]![j + 1]! + 1 : Math.max(dp[i + 1]![j]!, dp[i]![j + 1]!);
-  const matched = new Set<number>();
+  const pairs: [number, number][] = [];
   for (let i = 0, j = 0; i < exp.length && j < got.length; ) {
     if (exp[i] === got[j]) {
-      matched.add(i);
+      pairs.push([i, j]);
       i++;
       j++;
     } else if (dp[i + 1]![j]! >= dp[i]![j + 1]!) i++;
     else j++;
   }
+  // Entre dos aciertos, los caracteres esperados se emparejan en orden con lo que se oyó en ese hueco.
+  const heardAt = new Map<number, string>();
+  const anchors: [number, number][] = [[-1, -1], ...pairs, [exp.length, got.length]];
+  for (let k = 0; k + 1 < anchors.length; k++) {
+    const [i0, j0] = anchors[k]!;
+    const [i1, j1] = anchors[k + 1]!;
+    for (let d = 1; i0 + d < i1 && j0 + d < j1; d++) heardAt.set(i0 + d, got[j0 + d]!);
+  }
+  const matched = new Set(pairs.map(([i]) => i));
   const lexical = charTones(exp.join(''));
   const spoken = applySandhi(exp, lexical.map((t) => t ?? 5));
   return {
     transcript,
-    syllables: exp.map((hanzi, i) =>
-      matched.has(i)
-        ? { hanzi, tone: lexical[i] === null ? null : (spoken[i] ?? null), toneConfidence: 0.7, gop: 0.9 }
-        : { hanzi, tone: null, toneConfidence: 0, gop: 0.2 },
-    ),
+    syllables: exp.map((hanzi, i) => {
+      const tone = lexical[i] === null ? null : (spoken[i] ?? null);
+      if (matched.has(i)) return { hanzi, tone, toneConfidence: 0.7, gop: 0.9, match: 'ok' as const, heard: hanzi };
+      const heard = heardAt.get(i);
+      const wanted = [lexical[i], spoken[i]].filter((t): t is Tone => !!t);
+      const match = heard ? compareSyllable(hanzi, wanted.length ? wanted : (READINGS.get(hanzi) ?? []).map(toneOf), heard) : 'miss';
+      const heardPinyin = heard ? READINGS.get(heard)?.[0] : undefined;
+      if (match === 'ok') return { hanzi, tone, toneConfidence: 0.6, gop: 0.85, match, heard, heardPinyin };
+      if (match === 'tone') return { hanzi, tone: heardPinyin ? toneOf(heardPinyin) : null, toneConfidence: 0.4, gop: 0.6, match, heard, heardPinyin };
+      return { hanzi, tone: null, toneConfidence: 0, gop: 0.2, match, ...(heard ? { heard, heardPinyin } : {}) };
+    }),
   };
 }

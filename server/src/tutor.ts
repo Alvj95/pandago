@@ -7,7 +7,17 @@ import { MAX_OUT_OF_LEVEL, outOfLevelRatio } from './levelGuard.ts';
 
 export interface PronunciationResult {
   transcript: string;
-  syllables: { hanzi: string; tone: 1 | 2 | 3 | 4 | 5 | null; toneConfidence: number; gop: number }[];
+  syllables: {
+    hanzi: string;
+    tone: 1 | 2 | 3 | 4 | 5 | null;
+    toneConfidence: number;
+    gop: number;
+    /** ok = se entendió · tone = misma sílaba con otro tono · miss = no se oyó o sonó a otra cosa. */
+    match?: 'ok' | 'tone' | 'miss';
+    /** Carácter que oyó el reconocedor en ese lugar y su pinyin numerado (p.ej. «jiao1»). */
+    heard?: string;
+    heardPinyin?: string;
+  }[];
 }
 
 export interface Tutor {
@@ -16,6 +26,17 @@ export interface Tutor {
   turn: (req: TurnRequest) => Promise<TutorTurn>;
   /** Evaluación de pronunciación (opcional según el motor). */
   assess?: (audio: ArrayBuffer, expectedHanzi: string) => Promise<PronunciationResult>;
+  /** Voz natural de Bao: frase china → audio mp3. */
+  tts?: (text: string) => Promise<ArrayBuffer>;
+  /** «Pregúntale a Bao»: duda libre sobre una frase, respondida en español. */
+  ask?: (req: AskRequest) => Promise<{ answer: string }>;
+}
+
+export interface AskRequest {
+  question: string;
+  /** Frase de la lección sobre la que se pregunta (opcional). */
+  context?: { hanzi: string; pinyin?: string; translation?: string };
+  hsk_level: number;
 }
 
 export class TutorRefusedError extends Error {}

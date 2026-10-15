@@ -12,7 +12,7 @@ import { useLearnerStore } from '@/store/useLearnerStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { trackQuest } from '@/store/useQuestStore';
-import { hasChineseVoice, speakChinese, stopSpeaking } from '@/lib/speech';
+import { hasChineseVoice, needsDeviceVoice, speakChinese, stopSpeaking } from '@/lib/speech';
 import { useTheme } from '@/theme';
 import { MessageBubble } from './components/MessageBubble';
 import { TaskInput } from './components/TaskInput';
@@ -96,7 +96,7 @@ export function ChatScreen({ scenario, node }: { scenario: Scenario; node?: Less
 
   useEffect(() => {
     void hasChineseVoice().then((ok) => {
-      if (!ok) dispatch({ type: 'notice', text: 'Tu móvil no tiene voz china instalada. Ve a Ajustes → Texto a voz → instala «Chino (China)» para oír a Bao 🔊' });
+      if (!ok && needsDeviceVoice()) dispatch({ type: 'notice', text: 'Tu móvil no tiene voz china instalada. Ve a Ajustes → Texto a voz → instala «Chino (China)» para oír a Bao 🔊' });
     });
     return () => void stopSpeaking();
   }, []);

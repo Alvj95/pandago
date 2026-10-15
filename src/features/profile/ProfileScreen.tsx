@@ -5,6 +5,7 @@ import { Card, ProgressBar, Segmented } from '@/components/ui';
 import { DIMENSIONS, levelDifficulty, pCorrect, topWeaknesses, type Dimension } from '@/features/learning/adaptive/learnerModel';
 import { useLearnerStore } from '@/store/useLearnerStore';
 import { useProgressStore } from '@/store/useProgressStore';
+import { speakChinese } from '@/lib/speech';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useTheme } from '@/theme';
 import { AchievementsCard } from '@/features/quests/AchievementsCard';
@@ -34,6 +35,10 @@ export function ProfileScreen() {
   const reduceMotion = useSettingsStore((s) => s.reduceMotion);
   const setReduceMotion = useSettingsStore((s) => s.setReduceMotion);
   const setVoice = useSettingsStore((s) => s.setVoice);
+  const voiceStyle = useSettingsStore((s) => s.voiceStyle);
+  const setVoiceStyle = useSettingsStore((s) => s.setVoiceStyle);
+  const slowVoice = useSettingsStore((s) => s.slowVoice);
+  const setSlowVoice = useSettingsStore((s) => s.setSlowVoice);
   const weaknesses = topWeaknesses(model);
 
   const stats = [
@@ -136,6 +141,28 @@ export function ProfileScreen() {
             <View style={styles.between}>
               <Text style={[type.body, { color: c.textPrimary }]}>🔊 Bao habla en voz alta</Text>
               <Switch value={voice} onValueChange={setVoice} trackColor={{ true: c.success, false: c.locked }} accessibilityLabel="Bao habla en voz alta" />
+            </View>
+            <View style={{ gap: spacing.xs }}>
+              <Text style={[type.caption, { color: c.textSecondary }]}>VOZ DE BAO</Text>
+              <Segmented
+                accessibilityLabel="Voz de Bao"
+                value={voiceStyle}
+                onChange={(v) => {
+                  setVoiceStyle(v);
+                  speakChinese('你好，我是宝宝！', { force: true });
+                }}
+                options={[
+                  { value: 'natural', label: '🐼 Natural' },
+                  { value: 'device', label: '📱 Del móvil' },
+                ]}
+              />
+              <Text style={[type.caption, { color: c.textSecondary }]}>
+                {voiceStyle === 'natural' ? 'Suena como una persona. Necesita internet: sin conexión, Bao usa la voz del móvil.' : 'Funciona sin internet. Necesita la voz «Chino (China)» instalada en el móvil.'}
+              </Text>
+            </View>
+            <View style={styles.between}>
+              <Text style={[type.body, { color: c.textPrimary }]}>🐢 Bao habla más despacio</Text>
+              <Switch value={slowVoice} onValueChange={setSlowVoice} trackColor={{ true: c.success, false: c.locked }} accessibilityLabel="Bao habla más despacio" />
             </View>
             <View style={styles.between}>
               <Text style={[type.body, { color: c.textPrimary }]}>🧘 Reducir movimiento</Text>

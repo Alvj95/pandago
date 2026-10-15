@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { TurnRequest } from '../../src/features/chat/engine/contract.ts';
-import { alignTranscript, coerceTurn, createWorkersAiTutor, extractJson } from '../src/providers/workersAi.ts';
+import { alignTranscript, audioOf, cleanAnswer, coerceTurn, createWorkersAiTutor, extractJson } from '../src/providers/workersAi.ts';
 import { createApp } from '../src/app.ts';
 
 const req: TurnRequest = {
@@ -100,5 +100,42 @@ describe('tutor gratis (Workers AI)', () => {
     assert.equal(bad.status, 400);
     const health = await app.request('/health');
     assert.deepEqual(await health.json(), { ok: true, tutor: 'x' });
+  });
+
+  it('semáforo: homófono con el mismo tono = bien; misma sílaba con otro tono = tono; otra cosa = fallo', () => {
+    // 叫 jiào oído como 交 jiāo (tono cambiado); 宝 bǎo oído como 饱 bǎo (homófono); 我 oído como 他.
+    const r = alignTranscript('你好，他交饱宝', '你好，我叫宝宝。');
+    assert.deepEqual(r.syllables.map((s) => s.match), ['ok', 'ok', 'miss', 'tone', 'ok', 'ok']);
+    assert.equal(r.syllables[3]!.heard, '交');
+    assert.equal(r.syllables[3]!.heardPinyin, 'jiao1');
+    assert.deepEqual(alignTranscript('', '你好').syllables.map((s) => s.match), ['miss', 'miss']);
+  });
+
+  it('voz de Bao (MeloTTS) y respuestas libres', async () => {
+    assert.deepEqual([...new Uint8Array(audioOf({ audio: btoa('ID3') }))], [73, 68, 51]);
+    assert.throws(() => audioOf({}));
+    assert.equal(cleanAnswer('<think>hmm</think>**了** indica pasado.'), '了 indica pasado.');
+    assert.equal(cleanAnswer('<think>sin cerrar...'), '');
+    const ai = { run: async (model: string, input: Record<string, unknown>) => (model === 'tts' ? { audio: btoa('mp3') } : { response: `Bao: ${JSON.stringify(input).includes('了') ? 'sí' : 'no'}` }) };
+    const tutor = createWorkersAiTutor(ai, ['m'], 'asr', 'tts');
+    assert.equal((await tutor.ask!({ question: '¿Por qué 了?', hsk_level: 1 })).answer, 'Bao: sí');
+    assert.equal((await tutor.tts!('你好')).byteLength, 3);
+  });
+
+  it('la API sirve la voz (GET, audio/mpeg) y las preguntas', async () => {
+    const app = createApp(() => ({
+      name: 'x',
+      turn: async () => Promise.reject(new Error('no')),
+      tts: async () => new Uint8Array([1, 2, 3]).buffer,
+      ask: async (q) => ({ answer: `R: ${q.question} (${q.hsk_level})` }),
+    }));
+    const tts = await app.request(`/v1/speech/tts?text=${encodeURIComponent('你好')}`);
+    assert.equal(tts.status, 200);
+    assert.equal(tts.headers.get('content-type'), 'audio/mpeg');
+    assert.equal((await tts.arrayBuffer()).byteLength, 3);
+    assert.equal((await app.request('/v1/speech/tts?text=')).status, 400);
+    const ask = await app.request('/v1/tutor/ask', { method: 'POST', body: JSON.stringify({ question: '¿qué?', hsk_level: 2 }), headers: { 'content-type': 'application/json' } });
+    assert.deepEqual(await ask.json(), { answer: 'R: ¿qué? (2)' });
+    assert.equal((await app.request('/v1/tutor/ask', { method: 'POST', body: '{}' })).status, 400);
   });
 });

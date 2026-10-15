@@ -1,23 +1,29 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { TurnRequest } from '../../src/features/chat/engine/contract.ts';
-import { type Tutor, TutorRefusedError } from './tutor.ts';
+import { type AskRequest, type Tutor, TutorRefusedError } from './tutor.ts';
 
-/** Turnos de chat por IP y hora: protege la cuota gratuita de usos abusivos. */
-const TURNS_PER_HOUR = 120;
+/** Peticiones por IP y hora: protegen la cuota gratuita de usos abusivos. */
+const LIMITS = { turn: 120, ask: 60, tts: 400 } as const;
 const usage = new Map<string, { hour: number; count: number }>();
 
-function overLimit(ip: string, now = Date.now()) {
+function overLimit(kind: keyof typeof LIMITS, ip: string, now = Date.now()) {
   const hour = Math.floor(now / 3_600_000);
-  const u = usage.get(ip);
+  const key = `${kind}|${ip}`;
+  const u = usage.get(key);
   if (!u || u.hour !== hour) {
     if (usage.size > 5000) usage.clear();
-    usage.set(ip, { hour, count: 1 });
+    usage.set(key, { hour, count: 1 });
     return false;
   }
   u.count += 1;
-  return u.count > TURNS_PER_HOUR;
+  return u.count > LIMITS[kind];
 }
+
+const ipOf = (header: (name: string) => string | undefined) => header('cf-connecting-ip') ?? header('x-forwarded-for') ?? 'local';
+
+/** Caché de Cloudflare (solo existe en Workers): la misma frase no vuelve a gastar cuota. */
+const edgeCache = () => (globalThis as { caches?: { default?: Cache } }).caches?.default;
 
 /**
  * API del tutor, igual en Node (desarrollo) y en Cloudflare Workers
@@ -29,8 +35,7 @@ export function createApp<E extends object>(getTutor: (env: E) => Tutor) {
   app.use('*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'OPTIONS'], allowHeaders: ['content-type', 'authorization'] }));
 
   app.post('/v1/tutor/turn', async (c) => {
-    const ip = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for') ?? 'local';
-    if (overLimit(ip)) return c.json({ error: 'rate_limited' }, 429);
+    if (overLimit('turn', ipOf((n) => c.req.header(n)))) return c.json({ error: 'rate_limited' }, 429);
     const parsed = TurnRequest.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json({ error: 'bad_request', issues: parsed.error.issues }, 400);
     try {
@@ -56,6 +61,47 @@ export function createApp<E extends object>(getTutor: (env: E) => Tutor) {
     } catch (err) {
       console.error(err);
       return c.json({ error: 'speech_unavailable', detail: String(err).slice(0, 300) }, 502);
+    }
+  });
+
+  // Voz natural de Bao. Es un GET para que el reproductor del móvil pueda abrir la URL directamente.
+  app.get('/v1/speech/tts', async (c) => {
+    const text = (c.req.query('text') ?? '').trim();
+    if (!text || text.length > 200) return c.json({ error: 'bad_request', detail: 'texto vacío o demasiado largo' }, 400);
+    const tutor = getTutor(c.env);
+    if (!tutor.tts) return c.json({ error: 'not_supported' }, 501);
+    const cache = edgeCache();
+    const key = new Request(new URL(`/v1/speech/tts?text=${encodeURIComponent(text)}`, c.req.url).toString());
+    const hit = await cache?.match(key).catch(() => undefined);
+    if (hit) return hit;
+    if (overLimit('tts', ipOf((n) => c.req.header(n)))) return c.json({ error: 'rate_limited' }, 429);
+    try {
+      const res = new Response(await tutor.tts(text), {
+        headers: { 'content-type': 'audio/mpeg', 'cache-control': 'public, max-age=2592000', 'access-control-allow-origin': '*' },
+      });
+      await cache?.put(key, res.clone()).catch(() => undefined);
+      return res;
+    } catch (err) {
+      console.error(err);
+      return c.json({ error: 'tts_unavailable', detail: String(err).slice(0, 300) }, 502);
+    }
+  });
+
+  app.post('/v1/tutor/ask', async (c) => {
+    if (overLimit('ask', ipOf((n) => c.req.header(n)))) return c.json({ error: 'rate_limited' }, 429);
+    const tutor = getTutor(c.env);
+    if (!tutor.ask) return c.json({ error: 'not_supported' }, 501);
+    const body = (await c.req.json().catch(() => null)) as Partial<AskRequest> | null;
+    const question = typeof body?.question === 'string' ? body.question.trim() : '';
+    if (!question) return c.json({ error: 'bad_request', detail: 'falta la pregunta' }, 400);
+    const ctx = body?.context;
+    const context = ctx && typeof ctx.hanzi === 'string' ? { hanzi: ctx.hanzi.slice(0, 120), pinyin: String(ctx.pinyin ?? '').slice(0, 200), translation: String(ctx.translation ?? '').slice(0, 200) } : undefined;
+    const level = Number(body?.hsk_level);
+    try {
+      return c.json(await tutor.ask({ question, context, hsk_level: level >= 1 && level <= 6 ? Math.round(level) : 1 }));
+    } catch (err) {
+      console.error(err);
+      return c.json({ error: 'tutor_unavailable', detail: String(err).slice(0, 300) }, 502);
     }
   });
 

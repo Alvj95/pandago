@@ -4,10 +4,8 @@
  * de uso, moderación y caché.
  */
 import { Platform } from 'react-native';
-import Constants from 'expo-constants';
+import { API_URL } from '@/lib/api';
 import { TutorTurn, type TurnRequest } from './contract';
-
-const API_URL: string = (Constants.expoConfig?.extra?.apiUrl as string | undefined) ?? 'http://localhost:8787';
 
 export class TutorUnavailableError extends Error {}
 
@@ -30,7 +28,16 @@ export async function requestTutorTurn(req: TurnRequest, authToken: string): Pro
 
 export interface PronunciationResult {
   transcript: string;
-  syllables: { hanzi: string; tone: 1 | 2 | 3 | 4 | 5 | null; toneConfidence: number; gop: number }[];
+  syllables: {
+    hanzi: string;
+    tone: 1 | 2 | 3 | 4 | 5 | null;
+    toneConfidence: number;
+    gop: number;
+    /** ok = se entendió · tone = misma sílaba con otro tono · miss = no se oyó (servidores antiguos no lo envían). */
+    match?: 'ok' | 'tone' | 'miss';
+    heard?: string;
+    heardPinyin?: string;
+  }[];
 }
 
 /**
@@ -57,4 +64,20 @@ export async function assessPronunciation(audioUri: string, expectedHanzi: strin
   }).finally(() => clearTimeout(timer));
   if (!res.ok) throw new TutorUnavailableError(`speech ${res.status}`);
   return (await res.json()) as PronunciationResult;
+}
+
+/** «Pregúntale a Bao»: duda libre sobre una frase; respuesta en español. */
+export async function askBao(question: string, context: { hanzi: string; pinyin?: string; translation?: string } | undefined, hskLevel: number): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20_000);
+  const res = await fetch(`${API_URL}/v1/tutor/ask`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ question, context, hsk_level: hskLevel }),
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timer));
+  if (!res.ok) throw new TutorUnavailableError(`ask ${res.status}`);
+  const { answer } = (await res.json()) as { answer?: string };
+  if (!answer) throw new TutorUnavailableError('ask: vacío');
+  return answer;
 }
