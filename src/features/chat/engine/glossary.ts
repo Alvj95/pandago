@@ -37,7 +37,48 @@ export const EXTRA_GLOSSARY: Entry[] = [
   { hanzi: '加油', pinyin: 'jiāyóu', meaning: '¡ánimo!' },
   { hanzi: '没问题', pinyin: 'méi wèntí', meaning: 'no hay problema' },
   { hanzi: '一样', pinyin: 'yíyàng', meaning: 'igual' },
+  { hanzi: '宝宝', pinyin: 'Bǎobao', meaning: 'Baobao (el nombre de Bao: «tesoro»)' },
+  { hanzi: '小王', pinyin: 'Xiǎo Wáng', meaning: 'Xiao Wang (nombre: «pequeño Wang»)' },
+  { hanzi: '小白', pinyin: 'Xiǎo Bái', meaning: 'Xiaobai (nombre del gato: «blanquito»)' },
+  { hanzi: '有意思', pinyin: 'yǒu yìsi', meaning: 'interesante, divertido' },
+  { hanzi: '乐', pinyin: 'lè', meaning: 'alegre (el lè de 快乐)' },
+  { hanzi: '一些', pinyin: 'yìxiē', meaning: 'algunos, unos cuantos' },
 ];
+
+/** Trozo de una línea para pintarla tocable: palabra (con glosa si se conoce) o puntuación. */
+export interface Piece {
+  text: string;
+  word?: Entry;
+  /** true si es hanzi (se puede tocar). */
+  han: boolean;
+}
+
+/** Como glossSentence, pero conserva la puntuación para pintar la línea entera. */
+export function glossPieces(hanzi: string, vocab: Entry[]): Piece[] {
+  const out: Piece[] = [];
+  let rest = '';
+  const flush = () => {
+    if (rest) out.push({ text: rest, han: false });
+    rest = '';
+  };
+  const glosses = glossSentence(hanzi, vocab);
+  let gi = 0;
+  const chars = [...hanzi];
+  for (let i = 0; i < chars.length; ) {
+    const g = glosses[gi];
+    if (g && chars.slice(i, i + [...g.hanzi].length).join('') === g.hanzi) {
+      flush();
+      out.push({ text: g.hanzi, word: g.word, han: true });
+      i += [...g.hanzi].length;
+      gi++;
+    } else {
+      rest += chars[i];
+      i++;
+    }
+  }
+  flush();
+  return out;
+}
 
 const HAN = /\p{Script=Han}/u;
 

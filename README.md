@@ -129,6 +129,14 @@ pandago/
   - **Conversación**: con el tutor IA si hay servidor; si no hay conexión, Bao practica con frases de la unidad (huecos corregidos en el móvil), así el camino nunca se bloquea.
   - **Desafío**: examen con todo el vocabulario de la unidad; superarlo da 30 💎.
 
+## Más formas de practicar (pestaña Hablar)
+
+- **📖 Historias con Bao**: 16 mini cuentos (uno por unidad) narrados con voz; toca cualquier palabra para ver pinyin y significado, modo «solo escuchar», traducción opcional y preguntas de comprensión.
+- **🎵 Entrenador de tonos**: escucha y elige la curva del tono en 3 niveles (una sílaba, dos sílabas, tono neutro y cambios de tono como 你好 = 2+3), con estadísticas del tono que más confundes.
+- **⚡ Retos rápidos**: relámpago (5 seguidas en 60 s), ¿qué has oído?, verdadero o falso, completa la frase y «repara tus errores». Superarlos da **+1 vida** (máx. 3 al día): ya no hace falta esperar 30 minutos.
+- **🎯 Misiones diarias** (3 al día + 1 semanal) con gemas y cofre, y **🏅 logros** en el Perfil.
+- **🧘 Reducir movimiento**: Bao se mueve con saltos pequeños y suaves; con esta opción solo cambia de expresión.
+
 ## 🎤 Aprende cantando (karaoke)
 
 Pestaña **Cantar** con 5 canciones: 3 infantiles tradicionales chinas de dominio público (两只老虎 *Dos tigres*, 小星星 *Estrellita*, 生日快乐 *Feliz cumpleaños*) y 2 originales de PandaGO! con vocabulario HSK 1 sobre melodías de dominio público (你好歌, 数字歌).

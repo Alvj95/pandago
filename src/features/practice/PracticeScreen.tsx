@@ -54,8 +54,21 @@ export function PracticeScreen() {
           </Card>
         </PressableScale>
 
+        <PressableScale onPress={() => router.push('/stories')} accessibilityRole="button" accessibilityLabel="Historias con Bao">
+          <Card index={2} tint={c.league} style={{ borderColor: c.league }}>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <Text style={styles.icon}>📖</Text>
+              <View style={styles.flex}>
+                <Text style={[type.title, styles.onBrand]}>Historias con Bao</Text>
+                <Text style={[type.body, styles.onBrand]}>16 mini cuentos con audio: toca las palabras y responde</Text>
+              </View>
+              <Text style={[type.title, styles.onBrand]}>›</Text>
+            </View>
+          </Card>
+        </PressableScale>
+
         <PressableScale onPress={() => router.push('/tones')} accessibilityRole="button" accessibilityLabel="Entrenador de tonos">
-          <Card index={2} tint={c.info} style={{ borderColor: c.info }}>
+          <Card index={3} tint={c.info} style={{ borderColor: c.info }}>
             <View style={[styles.row, { gap: spacing.sm }]}>
               <Text style={styles.icon}>🎵</Text>
               <View style={styles.flex}>
@@ -77,7 +90,7 @@ export function PracticeScreen() {
               router.push(scenario.id === 'voice-drill' ? { pathname: '/chat', params: { mode: 'voice' } } : { pathname: '/chat', params: { nodeId: scenario.id } })
             }
           >
-            <Card index={i + 3}>
+            <Card index={Math.min(i + 4, 8)}>
               <View style={[styles.row, { gap: spacing.sm }]}>
                 <View style={[styles.badge, { backgroundColor: scenario.persona === 'bao' ? c.primarySoft : c.successSoft, borderRadius: radius.md }]}>
                   <Text style={styles.icon}>{icon}</Text>
