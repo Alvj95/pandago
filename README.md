@@ -129,7 +129,7 @@ pandago/
   - **Conversación**: con el tutor IA si hay servidor; si no hay conexión, Bao practica con frases de la unidad (huecos corregidos en el móvil), así el camino nunca se bloquea.
   - **Desafío**: examen con todo el vocabulario de la unidad; superarlo da 30 💎.
 
-## Más formas de practicar (pestaña Hablar)
+## Más formas de practicar (pestaña Practicar)
 
 - **📖 Historias con Bao**: 16 mini cuentos (uno por unidad) narrados con voz; toca cualquier palabra para ver pinyin y significado, modo «solo escuchar», traducción opcional y preguntas de comprensión.
 - **🎵 Entrenador de tonos**: escucha y elige la curva del tono en 3 niveles (una sílaba, dos sílabas, tono neutro y cambios de tono como 你好 = 2+3), con estadísticas del tono que más confundes.
@@ -138,6 +138,8 @@ pandago/
 - **🈶 Caracteres con historia**: los 346 caracteres del curso descompuestos en sus partes (con significado en español), una historia para recordarlos o la pista de significado + sonido, su familia (mismo radical), palabras que lo usan y práctica de trazos. Se abren también tocando cada carácter en las fichas de palabras.
 - **📕 Diccionario y «Mis palabras»**: búsqueda en español, pinyin (con o sin tonos) o caracteres; guarda palabras con ⭐ y repásalas con tarjetas (Difícil / Bien / Fácil).
 - **📝 Simulacro HSK**: exámenes de HSK 1 y HSK 2 (corto o completo) con el formato oficial: audición y lectura, tiempo límite, nota sobre 200 (aprobado con 120), resultados por tipo de pregunta y repaso de errores.
+- **🗣️ Sombra**: escucha una frase, grábate imitándola y compara tu voz con la de Bao; la «melodía» de tonos de la frase se dibuja como guía.
+- **🧳 Frases de supervivencia**: 8 situaciones de viaje (restaurante, taxi, hotel, emergencias…) con audio normal y lento y un modo «mostrar en grande».
 - **🧘 Reducir movimiento**: Bao se mueve con saltos pequeños y suaves; con esta opción solo cambia de expresión.
 
 ## 🎤 Aprende cantando (karaoke)

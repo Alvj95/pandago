@@ -26,7 +26,7 @@ export function PhrasebookScreen() {
         <Text style={[type.title, { color: c.textPrimary }]}>🧳 Frases de supervivencia</Text>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsBar} contentContainerStyle={{ padding: spacing.sm, gap: spacing.xs }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsBar} contentContainerStyle={{ padding: spacing.sm, gap: spacing.xs, alignItems: 'center' }}>
         {SITUATIONS.map((s) => {
           const active = s.id === sid;
           return (
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center' },
   center: { alignItems: 'center', justifyContent: 'center' },
-  tabsBar: { flexGrow: 0 },
+  tabsBar: { flexGrow: 0, flexShrink: 0, minHeight: 56 },
   tab: { borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 6 },
   card: { borderWidth: 2, borderBottomWidth: 4 },
   action: { borderWidth: 1.5, paddingHorizontal: 10, paddingVertical: 6 },

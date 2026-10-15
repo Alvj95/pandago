@@ -29,6 +29,7 @@ export function PracticeScreen() {
         <Text style={[type.display, { color: c.textPrimary }]}>Practicar</Text>
         <BaoBubble mood="talking" message="Aquí practicamos sin miedo: equivocarte no cuesta vidas. ¡Habla todo lo que puedas!" hanzi="我们聊天吧！" pinyin="wǒmen liáotiān ba" />
 
+        <Text style={[type.caption, { color: c.textSecondary, marginTop: spacing.sm }]}>REPASAR Y GANAR VIDAS</Text>
         <PressableScale onPress={() => router.push('/review')} accessibilityRole="button" accessibilityLabel="Repaso inteligente">
           <Card index={0} tint={c.success} style={{ borderColor: c.successLip }}>
             <View style={[styles.row, { gap: spacing.sm }]}>
@@ -74,47 +75,9 @@ export function PracticeScreen() {
           </Card>
         </PressableScale>
 
-        <PressableScale onPress={() => router.push('/phrases')} accessibilityRole="button" accessibilityLabel="Frases de supervivencia">
-          <Card index={2}>
-            <View style={[styles.row, { gap: spacing.sm }]}>
-              <Text style={styles.icon}>🧳</Text>
-              <View style={styles.flex}>
-                <Text style={[type.title, { color: c.textPrimary }]}>Frases de supervivencia</Text>
-                <Text style={[type.body, { color: c.textSecondary }]}>Restaurante, taxi, hotel, emergencias… listas para usar en China</Text>
-              </View>
-              <Text style={[type.title, { color: c.textSecondary }]}>›</Text>
-            </View>
-          </Card>
-        </PressableScale>
-
-        <PressableScale onPress={() => router.push('/exam')} accessibilityRole="button" accessibilityLabel="Simulacro HSK">
-          <Card index={2}>
-            <View style={[styles.row, { gap: spacing.sm }]}>
-              <Text style={styles.icon}>📝</Text>
-              <View style={styles.flex}>
-                <Text style={[type.title, { color: c.textPrimary }]}>Simulacro HSK</Text>
-                <Text style={[type.body, { color: c.textSecondary }]}>Examen con el formato oficial de HSK 1 y HSK 2, con nota sobre 200</Text>
-              </View>
-              <Text style={[type.title, { color: c.textSecondary }]}>›</Text>
-            </View>
-          </Card>
-        </PressableScale>
-
-        <PressableScale onPress={() => router.push('/characters')} accessibilityRole="button" accessibilityLabel="Caracteres con historia">
-          <Card index={2}>
-            <View style={[styles.row, { gap: spacing.sm }]}>
-              <Text style={styles.icon}>🈶</Text>
-              <View style={styles.flex}>
-                <Text style={[type.title, { color: c.textPrimary }]}>Caracteres con historia</Text>
-                <Text style={[type.body, { color: c.textSecondary }]}>Sus partes, una historia para recordarlos y practicar trazos</Text>
-              </View>
-              <Text style={[type.title, { color: c.textSecondary }]}>›</Text>
-            </View>
-          </Card>
-        </PressableScale>
-
+        <Text style={[type.caption, { color: c.textSecondary, marginTop: spacing.sm }]}>LEER Y ESCUCHAR</Text>
         <PressableScale onPress={() => router.push('/stories')} accessibilityRole="button" accessibilityLabel="Historias con Bao">
-          <Card index={2} tint={c.league} style={{ borderColor: c.league }}>
+          <Card index={3} tint={c.league} style={{ borderColor: c.league }}>
             <View style={[styles.row, { gap: spacing.sm }]}>
               <Text style={styles.icon}>📖</Text>
               <View style={styles.flex}>
@@ -126,8 +89,22 @@ export function PracticeScreen() {
           </Card>
         </PressableScale>
 
+        <PressableScale onPress={() => router.push('/phrases')} accessibilityRole="button" accessibilityLabel="Frases de supervivencia">
+          <Card index={4}>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <Text style={styles.icon}>🧳</Text>
+              <View style={styles.flex}>
+                <Text style={[type.title, { color: c.textPrimary }]}>Frases de supervivencia</Text>
+                <Text style={[type.body, { color: c.textSecondary }]}>Restaurante, taxi, hotel, emergencias… listas para usar en China</Text>
+              </View>
+              <Text style={[type.title, { color: c.textSecondary }]}>›</Text>
+            </View>
+          </Card>
+        </PressableScale>
+
+        <Text style={[type.caption, { color: c.textSecondary, marginTop: spacing.sm }]}>PRONUNCIAR</Text>
         <PressableScale onPress={() => router.push('/tones')} accessibilityRole="button" accessibilityLabel="Entrenador de tonos">
-          <Card index={3} tint={c.info} style={{ borderColor: c.info }}>
+          <Card index={5} tint={c.info} style={{ borderColor: c.info }}>
             <View style={[styles.row, { gap: spacing.sm }]}>
               <Text style={styles.icon}>🎵</Text>
               <View style={styles.flex}>
@@ -135,6 +112,46 @@ export function PracticeScreen() {
                 <Text style={[type.body, styles.onBrand]}>Escucha y reconoce los 4 tonos, parejas y el tono neutro</Text>
               </View>
               <Text style={[type.title, styles.onBrand]}>›</Text>
+            </View>
+          </Card>
+        </PressableScale>
+
+        <PressableScale onPress={() => router.push('/shadowing')} accessibilityRole="button" accessibilityLabel="Sombra">
+          <Card index={6}>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <Text style={styles.icon}>🗣️</Text>
+              <View style={styles.flex}>
+                <Text style={[type.title, { color: c.textPrimary }]}>Sombra: repite como un nativo</Text>
+                <Text style={[type.body, { color: c.textSecondary }]}>Escucha, grábate y compara tu voz con la de Bao</Text>
+              </View>
+              <Text style={[type.title, { color: c.textSecondary }]}>›</Text>
+            </View>
+          </Card>
+        </PressableScale>
+
+        <Text style={[type.caption, { color: c.textSecondary, marginTop: spacing.sm }]}>CARACTERES Y EXAMEN</Text>
+        <PressableScale onPress={() => router.push('/characters')} accessibilityRole="button" accessibilityLabel="Caracteres con historia">
+          <Card index={7}>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <Text style={styles.icon}>🈶</Text>
+              <View style={styles.flex}>
+                <Text style={[type.title, { color: c.textPrimary }]}>Caracteres con historia</Text>
+                <Text style={[type.body, { color: c.textSecondary }]}>Sus partes, una historia para recordarlos y practicar trazos</Text>
+              </View>
+              <Text style={[type.title, { color: c.textSecondary }]}>›</Text>
+            </View>
+          </Card>
+        </PressableScale>
+
+        <PressableScale onPress={() => router.push('/exam')} accessibilityRole="button" accessibilityLabel="Simulacro HSK">
+          <Card index={8}>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <Text style={styles.icon}>📝</Text>
+              <View style={styles.flex}>
+                <Text style={[type.title, { color: c.textPrimary }]}>Simulacro HSK</Text>
+                <Text style={[type.body, { color: c.textSecondary }]}>Examen con el formato oficial de HSK 1 y HSK 2, con nota sobre 200</Text>
+              </View>
+              <Text style={[type.title, { color: c.textSecondary }]}>›</Text>
             </View>
           </Card>
         </PressableScale>

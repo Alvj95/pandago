@@ -15,10 +15,10 @@ export function hasChineseVoice(): Promise<boolean> {
 }
 
 /** Habla en mandarín. `force` ignora el ajuste (cuando el usuario toca un 🔊 a propósito). */
-export function speakChinese(text: string, opts: { rate?: number; force?: boolean } = {}) {
+export function speakChinese(text: string, opts: { rate?: number; force?: boolean; onDone?: () => void } = {}) {
   if (!opts.force && !useSettingsStore.getState().voice) return;
   Speech.stop();
-  Speech.speak(text, { language: 'zh-CN', rate: opts.rate ?? 0.85 });
+  Speech.speak(text, { language: 'zh-CN', rate: opts.rate ?? 0.85, onDone: opts.onDone });
 }
 
 export const stopSpeaking = () => Speech.stop();
