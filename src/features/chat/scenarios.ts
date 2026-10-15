@@ -1,5 +1,6 @@
 import { UNITS } from '@/data/hsk/course';
 import type { Scenario } from './engine/contract';
+import { moodLine, type PetState } from '@/features/pet/pet';
 
 const ids = (...hanzi: string[]) => hanzi.map((h) => `h1-${h}`);
 
@@ -59,6 +60,20 @@ export function callScenario(completedIds: string[]): Scenario {
     persona: 'bao',
     role: undefined,
     goal: `Llamada de voz con Bao (frases cortas y naturales, como al teléfono). Tema: ${base.goal}`,
+    max_turns: 8,
+  };
+}
+
+/** «Hablar» en la casa de Bao: charla casual que sabe cómo está Bao y qué habéis hecho. */
+export function petScenario(pet: PetState, hour: number): Scenario {
+  const feel = moodLine(pet, hour);
+  const recent = pet.words.slice(-3).join('、');
+  return {
+    id: 'pet-talk',
+    title: 'Charla en casa de Bao',
+    goal: `Charla casual en casa de Bao. Bao ahora mismo dice «${feel.hanzi}» (${feel.es}).${recent ? ` Hoy habéis practicado: ${recent}.` : ''} Pregunta al estudiante por su día con frases muy sencillas.`,
+    persona: 'bao',
+    target_item_ids: ['h1-你好', ...ids('吃', '喝', '喜欢', '今天')],
     max_turns: 8,
   };
 }
