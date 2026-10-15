@@ -74,6 +74,19 @@ export function PracticeScreen() {
           </Card>
         </PressableScale>
 
+        <PressableScale onPress={() => router.push('/characters')} accessibilityRole="button" accessibilityLabel="Caracteres con historia">
+          <Card index={2}>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <Text style={styles.icon}>🈶</Text>
+              <View style={styles.flex}>
+                <Text style={[type.title, { color: c.textPrimary }]}>Caracteres con historia</Text>
+                <Text style={[type.body, { color: c.textSecondary }]}>Sus partes, una historia para recordarlos y practicar trazos</Text>
+              </View>
+              <Text style={[type.title, { color: c.textSecondary }]}>›</Text>
+            </View>
+          </Card>
+        </PressableScale>
+
         <PressableScale onPress={() => router.push('/stories')} accessibilityRole="button" accessibilityLabel="Historias con Bao">
           <Card index={2} tint={c.league} style={{ borderColor: c.league }}>
             <View style={[styles.row, { gap: spacing.sm }]}>

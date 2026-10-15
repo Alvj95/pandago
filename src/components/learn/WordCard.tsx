@@ -1,8 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { PressableScale } from '@/components/ui';
 import { VOCAB } from '@/data/hsk/course';
 import type { VocabItem } from '@/data/hsk/types';
 import { speakChinese } from '@/lib/speech';
+import { CHARS, explain } from '@/features/characters/chars';
 import { useTheme } from '@/theme';
 import { StarButton } from './StarButton';
 import { ExampleRow, HanziTones, PinyinText } from './ToneText';
@@ -13,7 +15,10 @@ const SINGLE = new Map(VOCAB.filter((v) => [...v.hanzi].length === 1).map((v) =>
 export function WordCard({ word }: { word: VocabItem }) {
   const { c, type, spacing, radius } = useTheme();
   const chars = [...word.hanzi];
-  const parts = chars.length > 1 ? chars.map((ch) => ({ ch, v: SINGLE.get(ch) })) : [];
+  const router = useRouter();
+  const parts = chars.map((ch) => ({ ch, v: SINGLE.get(ch), info: CHARS[ch] }));
+  // Pista corta del primer carácter con historia, como gancho para abrir su ficha.
+  const hook = parts.map((p) => (p.info ? explain(p.ch, p.info) : null)).find((e) => e?.story || e?.sound);
 
   return (
     <View style={{ gap: spacing.md }}>
@@ -35,17 +40,27 @@ export function WordCard({ word }: { word: VocabItem }) {
         <StarButton id={word.id} size={28} />
       </View>
 
-      {parts.some((p) => p.v) && (
+      {parts.some((p) => p.info) && (
         <View style={{ gap: spacing.xs }}>
-          <Text style={[type.caption, { color: c.textSecondary }]}>CARÁCTER A CARÁCTER</Text>
+          <Text style={[type.caption, { color: c.textSecondary }]}>CARÁCTER A CARÁCTER · TOCA PARA VER SU HISTORIA</Text>
           <View style={[styles.wrap, { gap: spacing.xs }]}>
-            {parts.map(({ ch, v }, i) => (
-              <View key={i} style={[styles.chip, { borderColor: c.border, borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 4 }]}>
+            {parts.map(({ ch, v, info }, i) => (
+              <PressableScale
+                key={i}
+                disabled={!info}
+                onPress={() => router.push({ pathname: '/character/[c]', params: { c: ch } })}
+                accessibilityRole="button"
+                accessibilityLabel={`Historia de ${ch}`}
+                style={[styles.chip, { borderColor: info ? c.primary : c.border, borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 4 }]}
+              >
                 <Text style={[type.hanzi, { fontSize: 20, lineHeight: 28, color: c.textPrimary }]}>{ch}</Text>
-                <Text style={[type.caption, { color: c.textSecondary, flexShrink: 1 }]}>{v ? `${v.pinyin} · ${v.meaning}` : '—'}</Text>
-              </View>
+                <Text style={[type.caption, { color: c.textSecondary, flexShrink: 1 }]}>
+                  {v ? `${v.pinyin} · ${v.meaning}` : info ? `${info.py} ·` : ''} 🈶
+                </Text>
+              </PressableScale>
             ))}
           </View>
+          {hook && <Text style={[type.caption, { color: c.textPrimary }]}>🈶 {hook.story ?? hook.sound}</Text>}
         </View>
       )}
 

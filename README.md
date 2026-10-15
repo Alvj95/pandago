@@ -135,6 +135,8 @@ pandago/
 - **🎵 Entrenador de tonos**: escucha y elige la curva del tono en 3 niveles (una sílaba, dos sílabas, tono neutro y cambios de tono como 你好 = 2+3), con estadísticas del tono que más confundes.
 - **⚡ Retos rápidos**: relámpago (5 seguidas en 60 s), ¿qué has oído?, verdadero o falso, completa la frase y «repara tus errores». Superarlos da **+1 vida** (máx. 3 al día): ya no hace falta esperar 30 minutos.
 - **🎯 Misiones diarias** (3 al día + 1 semanal) con gemas y cofre, y **🏅 logros** en el Perfil.
+- **🈶 Caracteres con historia**: los 346 caracteres del curso descompuestos en sus partes (con significado en español), una historia para recordarlos o la pista de significado + sonido, su familia (mismo radical), palabras que lo usan y práctica de trazos. Se abren también tocando cada carácter en las fichas de palabras.
+- **📕 Diccionario y «Mis palabras»**: búsqueda en español, pinyin (con o sin tonos) o caracteres; guarda palabras con ⭐ y repásalas con tarjetas (Difícil / Bien / Fácil).
 - **🧘 Reducir movimiento**: Bao se mueve con saltos pequeños y suaves; con esta opción solo cambia de expresión.
 
 ## 🎤 Aprende cantando (karaoke)
@@ -228,3 +230,5 @@ Comprobaciones: `npm run typecheck` · `npm test` (40 pruebas).
 ## Licencias de datos
 
 Los datos de orden de trazos (`src/data/strokes/`) provienen de Make Me a Hanzi / `hanzi-writer-data` y se distribuyen bajo la Arphic Public License (incluida en `src/data/strokes/ARPHICPL.TXT`).
+
+La descomposición de los caracteres (`src/data/chars/chars.json`) se deriva de `dictionary.txt` de [Make Me a Hanzi](https://github.com/skishore/makemeahanzi) (LGPL-3.0; ver `src/data/chars/LICENSE.md`). Los significados y las historias en español son propios.
