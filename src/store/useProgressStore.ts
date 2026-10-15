@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { HskLevel, LessonNode } from '@/data/hsk/types';
 import { MAX_FREEZES, type ChestReward } from '@/features/rewards/chest';
+import { MAX_CHALLENGE_HEARTS_PER_DAY } from '@/features/challenges/engine';
 import type { League } from '@/features/leagues/leaderboard';
 
 export const MAX_HEARTS = 5;
@@ -26,6 +27,8 @@ export interface ProgressState {
   completedNodeIds: string[];
   /** Cofres ganados pendientes de abrir. */
   pendingChests: number;
+  /** Vidas ganadas hoy con retos (máx. MAX_CHALLENGE_HEARTS_PER_DAY). */
+  challengeHearts: { day: string; count: number };
 
   awardXp: (amount: number) => void;
   setDailyGoal: (xp: number) => void;
@@ -38,6 +41,10 @@ export interface ProgressState {
   consumePendingChest: () => boolean;
   claimReward: (reward: ChestReward) => void;
   earnGems: (amount: number) => void;
+  /** Vidas que aún se pueden ganar hoy con retos. */
+  challengeHeartsLeft: (now?: number) => number;
+  /** Suma 1 vida por reto superado si quedan hoy y no estás al máximo; devuelve si se sumó. */
+  winChallengeHeart: (now?: number) => boolean;
   /** Llamar al abrir la app: regenera vidas y rompe/conserva la racha. */
   tick: (now?: number) => void;
 }
@@ -61,6 +68,7 @@ export const useProgressStore = create<ProgressState>()(
       leagueWeeklyXp: 0,
       completedNodeIds: [],
       pendingChests: 0,
+      challengeHearts: { day: '', count: 0 },
 
       awardXp: (amount) => {
         const today = dayKey(Date.now());
@@ -111,6 +119,20 @@ export const useProgressStore = create<ProgressState>()(
         })),
 
       earnGems: (amount) => set((s) => ({ gems: s.gems + amount })),
+
+      challengeHeartsLeft: (now = Date.now()) => {
+        const { day, count } = get().challengeHearts;
+        return MAX_CHALLENGE_HEARTS_PER_DAY - (day === dayKey(now) ? count : 0);
+      },
+
+      winChallengeHeart: (now = Date.now()) => {
+        const s = get();
+        if (s.hearts >= MAX_HEARTS || s.challengeHeartsLeft(now) <= 0) return false;
+        const today = dayKey(now);
+        const used = s.challengeHearts.day === today ? s.challengeHearts.count : 0;
+        set({ hearts: s.hearts + 1, challengeHearts: { day: today, count: used + 1 } });
+        return true;
+      },
 
       tick: (now = Date.now()) => {
         const s = get();

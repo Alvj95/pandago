@@ -44,7 +44,9 @@ export function LessonComplete({ summary, bonusGems = 0, onContinue }: { summary
   );
 }
 
-export function OutOfHearts({ gems, cost, onRefill, onPractice, onQuit }: { gems: number; cost: number; onRefill: () => void; onPractice: () => void; onQuit: () => void }) {
+export function OutOfHearts({
+  gems, cost, challengesLeft, onChallenge, onRefill, onPractice, onQuit,
+}: { gems: number; cost: number; challengesLeft: number; onChallenge: () => void; onRefill: () => void; onPractice: () => void; onQuit: () => void }) {
   const { c, type, spacing } = useTheme();
   return (
     <View style={[styles.screen, { padding: spacing.lg, gap: spacing.lg }]}>
@@ -52,11 +54,16 @@ export function OutOfHearts({ gems, cost, onRefill, onPractice, onQuit }: { gems
         <Bao mood="encourage" size={120} />
         <Text style={[type.display, { color: c.danger, textAlign: 'center' }]}>¡Sin vidas!</Text>
         <Text style={[type.body, { color: c.textSecondary, textAlign: 'center' }]}>
-          Se recupera 1 vida cada 30 minutos. Mientras tanto, puedes practicar conversación con Bao: allí no se pierden vidas.
+          Se recupera 1 vida cada 30 minutos. ¿No quieres esperar? Supera un reto corto y gana una vida ahora.
         </Text>
       </View>
-      <Button3D label="Practicar con Bao" onPress={onPractice} />
-      <Button3D label={`Recargar · 💎 ${cost}`} variant="success" disabled={gems < cost} onPress={onRefill} />
+      {challengesLeft > 0 ? (
+        <Button3D label={`⚡ Reto: gana 1 vida (quedan ${challengesLeft} hoy)`} variant="success" onPress={onChallenge} />
+      ) : (
+        <Text style={[type.caption, { color: c.textSecondary, textAlign: 'center' }]}>Hoy ya ganaste las vidas de los retos. ¡Vuelve mañana!</Text>
+      )}
+      <Button3D label="Practicar con Bao (sin gastar vidas)" onPress={onPractice} />
+      <Button3D label={`Recargar todas · 💎 ${cost}`} variant="primary" disabled={gems < cost} onPress={onRefill} />
       <Button3D label="Terminar por hoy" variant="ghost" onPress={onQuit} />
     </View>
   );

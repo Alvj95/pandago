@@ -6,6 +6,7 @@ import { Card, PressableScale } from '@/components/ui';
 import { ALL_SCENARIOS } from '@/features/chat/scenarios';
 import { dueItems } from '@/features/learning/adaptive/srs';
 import { useLearnerStore } from '@/store/useLearnerStore';
+import { MAX_HEARTS, useProgressStore } from '@/store/useProgressStore';
 import { useTheme } from '@/theme';
 
 /** Pestaña "Hablar": todas las conversaciones con IA + repaso inteligente. Aquí nunca se gastan vidas. */
@@ -14,6 +15,8 @@ export function PracticeScreen() {
   const router = useRouter();
   const model = useLearnerStore((s) => s.model);
   const due = dueItems(model).length;
+  const hearts = useProgressStore((s) => s.hearts);
+  const left = useProgressStore((s) => s.challengeHeartsLeft());
 
   return (
     <SafeAreaView edges={['top']} style={[styles.flex, { backgroundColor: c.background }]}>
@@ -36,6 +39,21 @@ export function PracticeScreen() {
           </Card>
         </PressableScale>
 
+        <PressableScale onPress={() => router.push('/challenge')} accessibilityRole="button" accessibilityLabel="Retos">
+          <Card index={1} tint={c.primary} style={{ borderColor: c.primaryLip }}>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <Text style={styles.icon}>⚡</Text>
+              <View style={styles.flex}>
+                <Text style={[type.title, styles.onBrand]}>Retos rápidos</Text>
+                <Text style={[type.body, styles.onBrand]}>
+                  {hearts < MAX_HEARTS && left > 0 ? `Gana vidas: te quedan ${left} hoy (${hearts}/${MAX_HEARTS} ❤️)` : 'Relámpago, escucha, verdadero o falso… +5 XP'}
+                </Text>
+              </View>
+              <Text style={[type.title, styles.onBrand]}>›</Text>
+            </View>
+          </Card>
+        </PressableScale>
+
         <Text style={[type.caption, { color: c.textSecondary, marginTop: spacing.sm }]}>CONVERSACIONES CON IA</Text>
         {ALL_SCENARIOS.map(({ scenario, icon, unitTitle }, i) => (
           <PressableScale
@@ -46,7 +64,7 @@ export function PracticeScreen() {
               router.push(scenario.id === 'voice-drill' ? { pathname: '/chat', params: { mode: 'voice' } } : { pathname: '/chat', params: { nodeId: scenario.id } })
             }
           >
-            <Card index={i + 1}>
+            <Card index={i + 2}>
               <View style={[styles.row, { gap: spacing.sm }]}>
                 <View style={[styles.badge, { backgroundColor: scenario.persona === 'bao' ? c.primarySoft : c.successSoft, borderRadius: radius.md }]}>
                   <Text style={styles.icon}>{icon}</Text>

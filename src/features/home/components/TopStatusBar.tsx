@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { StatPill } from '@/components/ui';
 import { MAX_HEARTS, useProgressStore } from '@/store/useProgressStore';
 import { useTheme } from '@/theme';
@@ -6,6 +7,7 @@ import { useTheme } from '@/theme';
 /** Barra superior fija: nivel HSK · racha · gemas · vidas. */
 export function TopStatusBar({ onPressLevel }: { onPressLevel?: () => void }) {
   const { c, radius, type, spacing } = useTheme();
+  const router = useRouter();
   const { hskLevel, streakDays, gems, hearts, xpToday } = useProgressStore();
   const streakActiveToday = xpToday > 0;
 
@@ -16,7 +18,7 @@ export function TopStatusBar({ onPressLevel }: { onPressLevel?: () => void }) {
       </View>
       <StatPill icon={streakActiveToday ? '🔥' : '🩶'} value={streakDays} color={streakActiveToday ? c.streak : c.textSecondary} label="Racha" />
       <StatPill icon="💎" value={gems} color={c.info} label="Gemas" />
-      <StatPill icon="❤️" value={hearts === MAX_HEARTS ? hearts : `${hearts}`} color={c.danger} label="Vidas" />
+      <StatPill icon="❤️" value={hearts} color={c.danger} label={hearts < MAX_HEARTS ? 'Vidas (toca para ganar una con un reto)' : 'Vidas'} onPress={hearts < MAX_HEARTS ? () => router.push('/challenge') : undefined} />
     </View>
   );
 }

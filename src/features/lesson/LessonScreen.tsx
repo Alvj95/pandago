@@ -73,6 +73,12 @@ export function LessonScreen({ exercises, node, level, costsHearts = true, intro
     void feedback.levelUp();
   }, [summary, node, progress]);
 
+  // Vidas ganadas fuera de la lección (reto, regeneración) desbloquean la lección al volver.
+  const outOfHearts = state.phase === 'out_of_hearts' || (costsHearts && state.hearts === 0);
+  useEffect(() => {
+    if (costsHearts && outOfHearts && progress.hearts > 0) dispatch({ type: 'refill', hearts: progress.hearts });
+  }, [costsHearts, outOfHearts, progress.hearts]);
+
   if (learning && intro) {
     return (
       <SafeAreaView style={[styles.flex, { backgroundColor: c.background }]}>
@@ -88,6 +94,8 @@ export function LessonScreen({ exercises, node, level, costsHearts = true, intro
         <OutOfHearts
           gems={progress.gems}
           cost={REFILL_COST}
+          challengesLeft={progress.challengeHeartsLeft()}
+          onChallenge={() => router.push('/challenge')}
           onQuit={() => exitTo(router)}
           onPractice={() => router.replace('/chat')}
           onRefill={() => {
