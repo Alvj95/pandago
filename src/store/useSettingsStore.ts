@@ -15,12 +15,15 @@ interface SettingsState {
   voiceStyle: 'natural' | 'device';
   /** Bao habla más despacio en toda la app. */
   slowVoice: boolean;
+  /** Bao asoma durante las lecciones para animar y dar consejos. */
+  baoPopups: boolean;
   setTheme: (t: ThemePreference) => void;
   setHaptics: (on: boolean) => void;
   setVoice: (on: boolean) => void;
   setReduceMotion: (on: boolean) => void;
   setVoiceStyle: (style: 'natural' | 'device') => void;
   setSlowVoice: (on: boolean) => void;
+  setBaoPopups: (on: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -32,12 +35,14 @@ export const useSettingsStore = create<SettingsState>()(
       reduceMotion: false,
       voiceStyle: 'natural',
       slowVoice: false,
+      baoPopups: true,
       setTheme: (theme) => set({ theme }),
       setHaptics: (haptics) => set({ haptics }),
       setVoice: (voice) => set({ voice }),
       setReduceMotion: (reduceMotion) => set({ reduceMotion }),
       setVoiceStyle: (voiceStyle) => set({ voiceStyle }),
       setSlowVoice: (slowVoice) => set({ slowVoice }),
+      setBaoPopups: (baoPopups) => set({ baoPopups }),
     }),
     { name: 'pandago-settings', storage: createJSONStorage(() => AsyncStorage) },
   ),

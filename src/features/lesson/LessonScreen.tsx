@@ -14,7 +14,10 @@ import { useTheme } from '@/theme';
 import { trackQuest } from '@/store/useQuestStore';
 import { FeedbackBanner } from './components/FeedbackBanner';
 import { LessonComplete, OutOfHearts } from './components/LessonEnd';
-import { VOCAB } from '@/data/hsk/course';
+import { UNITS, VOCAB } from '@/data/hsk/course';
+import { BaoPopup } from './components/BaoPopup';
+import { freshMemory, nextPopup, type PopupLine, tipFrom } from './popups';
+import { useSettingsStore } from '@/store/useSettingsStore';
 import { AskBaoSheet } from './components/AskBaoSheet';
 import { LessonHeader } from './components/LessonHeader';
 import { askContextOf, quickQuestions } from './askContext';
@@ -49,6 +52,16 @@ export function LessonScreen({ exercises, node, level, costsHearts = true, intro
   const [choice, setChoice] = useState<number | null>(null);
   const [order, setOrder] = useState<number[]>([]);
   const [asking, setAsking] = useState(false);
+  const popupsOn = useSettingsStore((s) => s.baoPopups);
+  const popupMem = useRef(freshMemory());
+  const [popup, setPopup] = useState<PopupLine | null>(null);
+  const hidePopup = useCallback(() => setPopup(null), []);
+  // Consejo de la unidad: una nota de gramática al azar.
+  const unitTip = useMemo(() => {
+    const unit = intro?.unit ?? UNITS.find((u) => node && u.nodes.some((n) => n.id === node.id));
+    const notes = unit?.guide?.notes ?? [];
+    return tipFrom(notes[Math.floor(Math.random() * notes.length)]);
+  }, [intro?.unit, node]);
   const rewarded = useRef(false);
   const [learning, setLearning] = useState(!!intro?.words.length);
 
@@ -63,8 +76,14 @@ export function LessonScreen({ exercises, node, level, costsHearts = true, intro
       for (const o of result.observations) record({ ...o, difficulty: levelDifficulty(level) });
       if (!result.correct && costsHearts) progress.loseHeart();
       dispatch({ type: 'graded', result, costsHeart: costsHearts });
+      if (popupsOn) {
+        const combo = result.correct ? state.combo + 1 : 0;
+        const next = nextPopup(popupMem.current, { correct: result.correct, combo, index: state.index, total: state.queue.length, tip: unitTip, rng: Math.random });
+        popupMem.current = next.mem;
+        if (next.line) setPopup(next.line);
+      }
     },
-    [ex, state.phase, record, level, costsHearts, progress],
+    [ex, state.phase, state.combo, state.index, state.queue.length, record, level, costsHearts, progress, popupsOn, unitTip],
   );
 
   const summary = useMemo(() => (state.phase === 'complete' ? summarize(state) : null), [state]);
@@ -161,6 +180,7 @@ export function LessonScreen({ exercises, node, level, costsHearts = true, intro
         {ex.kind === 'stroke_writing' && <StrokeWriting key={ex.id + state.index} exercise={ex} onComplete={(score) => submit({ kind: 'self_graded', score })} />}
       </ScrollView>
 
+      <BaoPopup line={popup} onDone={hidePopup} />
       {revealed && state.last ? (
         <FeedbackBanner correct={state.last.correct} solution={state.last.solution} explain={state.last.explain} combo={state.combo} onContinue={() => {
             // La selección local se limpia al pasar al siguiente ejercicio.

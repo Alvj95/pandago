@@ -30,7 +30,12 @@ export function BaoFace({ mood, size }: { mood: BaoMood; size: number }) {
       <Path d="M82 64 Q86 78 78 90" stroke={FUR_DARK} strokeWidth={6} strokeLinecap="round" fill="none" />
 
       {/* Ojos */}
-      {happy ? (
+      {mood === 'sleep' ? (
+        <G>
+          <Path d="M35 64 Q42 69 49 64" stroke={INK} strokeWidth={4} strokeLinecap="round" fill="none" />
+          <Path d="M71 64 Q78 69 85 64" stroke={INK} strokeWidth={4} strokeLinecap="round" fill="none" />
+        </G>
+      ) : happy ? (
         <G>
           <Path d="M36 64 Q42 56 48 64" stroke={INK} strokeWidth={4} strokeLinecap="round" fill="none" />
           <Path d="M72 64 Q78 56 84 64" stroke={INK} strokeWidth={4} strokeLinecap="round" fill="none" />
@@ -63,6 +68,8 @@ export function BaoFace({ mood, size }: { mood: BaoMood; size: number }) {
       {/* Boca */}
       {mood === 'talking' ? null /* la boca que habla la anima <Bao /> */ : happy ? (
         <Path d="M48 84 Q60 100 72 84 Z" fill={INK} />
+      ) : mood === 'sleep' ? (
+        <Ellipse cx={60} cy={86} rx={3} ry={2} fill={INK} />
       ) : sad ? (
         <Path d="M52 90 Q60 84 68 90" stroke={INK} strokeWidth={3} strokeLinecap="round" fill="none" />
       ) : (

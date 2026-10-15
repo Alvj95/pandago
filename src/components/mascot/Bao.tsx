@@ -38,6 +38,7 @@ const OPEN_EYES: Record<BaoMood, { cx: number; cy: number; r: number } | null> =
   thinking: { cx: 44, cy: 60, r: 6 },
   happy: null,
   celebrate: null,
+  sleep: null,
 };
 
 /**
@@ -113,6 +114,11 @@ export function Bao({ mood = 'idle', size = 96, outfit }: Props) {
         earL.set(withSequence(soft(-8, 300), soft(0, 300)));
         earR.set(withSequence(soft(8, 300), soft(0, 300)));
         sparkle.set(withSequence(soft(1, 300), withDelay(900, soft(0, 600))));
+        break;
+      case 'sleep':
+        // Respira despacio y hondo.
+        sx.set(withRepeat(soft(1.03, 2600), -1, true));
+        sy.set(withRepeat(soft(1.04, 2600), -1, true));
         break;
       case 'encourage':
         // Inclina la cabeza despacio y baja las orejas: «no pasa nada».

@@ -8,4 +8,5 @@ export type BaoMood =
   | 'thinking' // la IA está generando respuesta
   | 'happy' // acierto: saltito suave y orejas
   | 'celebrate' // racha / fin de lección: saltito, balanceo y destellos
-  | 'encourage'; // fallo: inclina la cabeza y baja las orejas
+  | 'encourage' // fallo: inclina la cabeza y baja las orejas
+  | 'sleep'; // dormido en su casa: ojos cerrados y respiración lenta

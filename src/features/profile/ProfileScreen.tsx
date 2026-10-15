@@ -41,6 +41,8 @@ export function ProfileScreen() {
   const setVoiceStyle = useSettingsStore((s) => s.setVoiceStyle);
   const slowVoice = useSettingsStore((s) => s.slowVoice);
   const setSlowVoice = useSettingsStore((s) => s.setSlowVoice);
+  const baoPopups = useSettingsStore((s) => s.baoPopups);
+  const setBaoPopups = useSettingsStore((s) => s.setBaoPopups);
   const weaknesses = topWeaknesses(model);
 
   const stats = [
@@ -174,6 +176,10 @@ export function ProfileScreen() {
             <View style={styles.between}>
               <Text style={[type.body, { color: c.textPrimary }]}>🐢 Bao habla más despacio</Text>
               <Switch value={slowVoice} onValueChange={setSlowVoice} trackColor={{ true: c.success, false: c.locked }} accessibilityLabel="Bao habla más despacio" />
+            </View>
+            <View style={styles.between}>
+              <Text style={[type.body, { color: c.textPrimary }]}>🐼 Bao aparece mientras estudio</Text>
+              <Switch value={baoPopups} onValueChange={setBaoPopups} trackColor={{ true: c.success, false: c.locked }} accessibilityLabel="Bao aparece mientras estudio" />
             </View>
             <View style={styles.between}>
               <Text style={[type.body, { color: c.textPrimary }]}>🧘 Reducir movimiento</Text>
