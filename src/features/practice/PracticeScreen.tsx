@@ -74,6 +74,19 @@ export function PracticeScreen() {
           </Card>
         </PressableScale>
 
+        <PressableScale onPress={() => router.push('/exam')} accessibilityRole="button" accessibilityLabel="Simulacro HSK">
+          <Card index={2}>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <Text style={styles.icon}>📝</Text>
+              <View style={styles.flex}>
+                <Text style={[type.title, { color: c.textPrimary }]}>Simulacro HSK</Text>
+                <Text style={[type.body, { color: c.textSecondary }]}>Examen con el formato oficial de HSK 1 y HSK 2, con nota sobre 200</Text>
+              </View>
+              <Text style={[type.title, { color: c.textSecondary }]}>›</Text>
+            </View>
+          </Card>
+        </PressableScale>
+
         <PressableScale onPress={() => router.push('/characters')} accessibilityRole="button" accessibilityLabel="Caracteres con historia">
           <Card index={2}>
             <View style={[styles.row, { gap: spacing.sm }]}>

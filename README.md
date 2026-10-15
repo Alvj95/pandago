@@ -137,6 +137,7 @@ pandago/
 - **🎯 Misiones diarias** (3 al día + 1 semanal) con gemas y cofre, y **🏅 logros** en el Perfil.
 - **🈶 Caracteres con historia**: los 346 caracteres del curso descompuestos en sus partes (con significado en español), una historia para recordarlos o la pista de significado + sonido, su familia (mismo radical), palabras que lo usan y práctica de trazos. Se abren también tocando cada carácter en las fichas de palabras.
 - **📕 Diccionario y «Mis palabras»**: búsqueda en español, pinyin (con o sin tonos) o caracteres; guarda palabras con ⭐ y repásalas con tarjetas (Difícil / Bien / Fácil).
+- **📝 Simulacro HSK**: exámenes de HSK 1 y HSK 2 (corto o completo) con el formato oficial: audición y lectura, tiempo límite, nota sobre 200 (aprobado con 120), resultados por tipo de pregunta y repaso de errores.
 - **🧘 Reducir movimiento**: Bao se mueve con saltos pequeños y suaves; con esta opción solo cambia de expresión.
 
 ## 🎤 Aprende cantando (karaoke)

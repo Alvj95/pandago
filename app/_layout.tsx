@@ -19,6 +19,7 @@ function ThemedStack() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="chat" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="lesson/[id]" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="exam" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="characters" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="character/[c]" options={{ presentation: 'fullScreenModal', animation: 'slide_from_right' }} />
         <Stack.Screen name="dictionary" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />

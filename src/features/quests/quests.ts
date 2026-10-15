@@ -17,6 +17,7 @@ export type QuestEvent =
   | 'challenge_won'
   | 'tone_correct'
   | 'tone_perfect'
+  | 'exam_pass'
   | 'streak'; // días de racha (máximo)
 
 /** Eventos que guardan el máximo en vez de sumar. */
@@ -109,6 +110,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'songs5', icon: '🎤', title: 'Estrella del karaoke', desc: 'Canta 5 canciones', target: 5, value: life('song') },
   { id: 'challenges10', icon: '⚡', title: 'Rayo', desc: 'Supera 10 retos rápidos', target: 10, value: life('challenge_won') },
   { id: 'tones', icon: '🎵', title: 'Oído de oro', desc: 'Haz 10/10 en el entrenador de tonos', target: 1, value: life('tone_perfect') },
+  { id: 'exam', icon: '📜', title: 'Aprobado', desc: 'Aprueba un simulacro HSK', target: 1, value: life('exam_pass') },
 ];
 
 export const achievementProgress = (a: Achievement, f: AchievementFacts) => Math.min(a.target, a.value(f));
