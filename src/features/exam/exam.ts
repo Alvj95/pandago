@@ -89,7 +89,8 @@ export function buildExam(spec: ExamSpec, ctx: Ctx, rng: Rng): ExamQuestion[] {
   const pictSentences = sentences
     .map((s) => ({ s, word: pictured.find((v) => s.tokens.includes(v.hanzi)) }))
     .filter((x): x is { s: SampleSentence; word: VocabItem } => !!x.word);
-  const pairs = replyPairs(spec.level === 1 ? ctx.stories.slice(0, 8) : ctx.stories);
+  // HSK 1 = unidades 1-8; HSK 2 usa todas las historias.
+  const pairs = replyPairs(spec.level === 1 ? ctx.stories.filter((s) => Number(s.unitId.slice(1)) <= 8) : ctx.stories);
   const byHanzi = new Map(ctx.vocab.map((v) => [v.hanzi, v]));
 
   const otherPics = (w: VocabItem, n: number) => sample(pictured.filter((v) => PICTURES[v.hanzi] !== PICTURES[w.hanzi]), n, rng);

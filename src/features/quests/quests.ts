@@ -18,6 +18,7 @@ export type QuestEvent =
   | 'tone_correct'
   | 'tone_perfect'
   | 'exam_pass'
+  | 'story'
   | 'streak'; // días de racha (máximo)
 
 /** Eventos que guardan el máximo en vez de sumar. */
@@ -42,6 +43,7 @@ export const QUEST_POOL: Quest[] = [
   { id: 'song1', icon: '🎤', title: 'Canta una canción', event: 'song', target: 1, gems: 15 },
   { id: 'challenge1', icon: '⚡', title: 'Supera un reto rápido', event: 'challenge_won', target: 1, gems: 15 },
   { id: 'tones8', icon: '🎵', title: 'Acierta 8 tonos', event: 'tone_correct', target: 8, gems: 15 },
+  { id: 'story1', icon: '📖', title: 'Lee una historia con Bao', event: 'story', target: 1, gems: 15 },
 ];
 
 export const WEEKLY_QUEST: Quest = { id: 'week300', icon: '🏆', title: 'Gana 300 XP esta semana', event: 'xp', target: 300, gems: 100 };
@@ -108,6 +110,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'boss1', icon: '🏆', title: 'Campeón de unidad', desc: 'Supera un desafío de unidad', target: 1, value: life('boss') },
   { id: 'chat50', icon: '💬', title: 'Charlatán', desc: 'Habla 50 turnos con Bao', target: 50, value: life('chat_turn') },
   { id: 'songs5', icon: '🎤', title: 'Estrella del karaoke', desc: 'Canta 5 canciones', target: 5, value: life('song') },
+  { id: 'stories20', icon: '📚', title: 'Gran lector', desc: 'Lee 20 historias', target: 20, value: life('story') },
   { id: 'challenges10', icon: '⚡', title: 'Rayo', desc: 'Supera 10 retos rápidos', target: 10, value: life('challenge_won') },
   { id: 'tones', icon: '🎵', title: 'Oído de oro', desc: 'Haz 10/10 en el entrenador de tonos', target: 1, value: life('tone_perfect') },
   { id: 'exam', icon: '📜', title: 'Aprobado', desc: 'Aprueba un simulacro HSK', target: 1, value: life('exam_pass') },

@@ -82,7 +82,7 @@ export function PracticeScreen() {
               <Text style={styles.icon}>📖</Text>
               <View style={styles.flex}>
                 <Text style={[type.title, styles.onBrand]}>Historias con Bao</Text>
-                <Text style={[type.body, styles.onBrand]}>16 mini cuentos con audio: toca las palabras y responde</Text>
+                <Text style={[type.body, styles.onBrand]}>48 mini cuentos con audio: toca las palabras y responde</Text>
               </View>
               <Text style={[type.title, styles.onBrand]}>›</Text>
             </View>

@@ -9,6 +9,8 @@ import { feedback } from '@/lib/haptics';
 import { dueItems } from '@/features/learning/adaptive/srs';
 import { useLearnerStore } from '@/store/useLearnerStore';
 import { useProgressStore } from '@/store/useProgressStore';
+import { useStoryStore } from '@/store/useStoryStore';
+import { STORIES } from '@/data/stories';
 import { useTheme } from '@/theme';
 import { QuestsCard } from '@/features/quests/QuestsCard';
 import { DailyGoalCard } from './components/DailyGoalCard';
@@ -29,6 +31,7 @@ export function HomeScreen() {
   const router = useRouter();
   const tick = useProgressStore((s) => s.tick);
   const pendingChests = useProgressStore((s) => s.pendingChests);
+  const storiesDone = useStoryStore((s) => s.done);
   const [showTip, setShowTip] = useState(true);
   const learner = useLearnerStore((s) => s.model);
   const [now] = useState(() => Date.now());
@@ -41,7 +44,13 @@ export function HomeScreen() {
     void feedback.tap();
     if (node.kind === 'conversation') router.push({ pathname: '/chat', params: { nodeId: node.id } });
     else if (node.kind === 'chest') router.push({ pathname: '/chest/[id]', params: { id: node.id } });
-    else router.push({ pathname: '/lesson/[id]', params: { id: node.id } });
+    else if (node.kind === 'story') {
+      // La primera historia de la unidad que aún no se ha leído (o la primera, para repasar).
+      const unitId = node.id.replace(/-story$/, '');
+      const own = STORIES.filter((s) => s.unitId === unitId);
+      const next = own.find((s) => !storiesDone[s.id]) ?? own[0];
+      if (next) router.push({ pathname: '/story/[id]', params: { id: next.id } });
+    } else router.push({ pathname: '/lesson/[id]', params: { id: node.id } });
   };
 
   // Cofre de la meta diaria (los del camino se abren desde su nodo).

@@ -7,7 +7,9 @@ import { PinyinText } from '@/components/learn';
 import { Bao } from '@/components/mascot';
 import { Button3D, PressableScale, ProgressBar } from '@/components/ui';
 import { VOCAB } from '@/data/hsk/course';
-import { type Story, STORY_NOTES, type StoryLine, type StoryQuestion } from '@/data/stories';
+import { type Story, STORIES, STORY_NOTES, type StoryLine, type StoryQuestion } from '@/data/stories';
+import { findNode } from '@/features/lesson/content';
+import { trackQuest } from '@/store/useQuestStore';
 import { glossPieces, type Piece } from '@/features/chat/engine/glossary';
 import { feedback } from '@/lib/haptics';
 import { exitTo } from '@/lib/navigation';
@@ -34,6 +36,7 @@ export function StoryScreen({ story }: { story: Story }) {
   const router = useRouter();
   const awardXp = useProgressStore((s) => s.awardXp);
   const finish = useStoryStore((s) => s.finish);
+  const completeNode = useProgressStore((s) => s.completeNode);
 
   const steps = useMemo(() => storySteps(story), [story]);
   const [pos, setPos] = useState(0);
@@ -57,8 +60,16 @@ export function StoryScreen({ story }: { story: Story }) {
     rewarded.current = true;
     finish(story.id, correct, story.questions.length);
     awardXp(STORY_XP);
+    // Leer cualquier historia de la unidad completa su nodo 📖 del camino.
+    const node = findNode(`${story.unitId}-story`);
+    if (node) completeNode(node);
+    trackQuest('story');
     void feedback.levelUp();
-  }, [ended, correct, finish, story, awardXp]);
+  }, [ended, correct, finish, story, awardXp, completeNode]);
+
+  // Siguiente historia de la misma unidad (en orden), para seguir leyendo.
+  const siblings = STORIES.filter((s) => s.unitId === story.unitId);
+  const nextStory = siblings[siblings.indexOf(story) + 1];
 
   const visible = steps.slice(0, Math.min(pos + 1, steps.length));
   const pendingQuestion = step?.kind === 'question' && answers[pos] === undefined;
@@ -127,7 +138,16 @@ export function StoryScreen({ story }: { story: Story }) {
 
       <View style={[styles.footer, { padding: spacing.md, borderTopColor: c.border }]}>
         {ended ? (
-          <Button3D label="Volver" variant="success" onPress={() => exitTo(router)} />
+          <View style={{ gap: spacing.sm }}>
+            {nextStory && (
+              <Button3D
+                label={`Siguiente historia: ${nextStory.title}`}
+                variant="success"
+                onPress={() => router.replace({ pathname: '/story/[id]', params: { id: nextStory.id } })}
+              />
+            )}
+            <Button3D label="Volver" variant={nextStory ? 'ghost' : 'success'} onPress={() => exitTo(router)} />
+          </View>
         ) : (
           <Button3D
             label={pendingQuestion ? 'Elige una respuesta' : 'Continuar'}

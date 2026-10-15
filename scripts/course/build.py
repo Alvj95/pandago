@@ -130,6 +130,8 @@ for ui, u in enumerate(U):
         nodes.append(dict(id=f'{uid}-l{li+1}', title=group[0], icon=u['icons'][li % len(u['icons'])], kind='lesson', skillIds=[vid(h) for h in group]))
         if li == 1:
             nodes.append(dict(id=f'{uid}-c', title='Cofre', icon='🎁', kind='chest', skillIds=[]))
+    # Historias de la unidad: leer y escuchar antes de conversar.
+    nodes.append(dict(id=f'{uid}-story', title='Historias', icon='📖', kind='story', skillIds=[]))
     chat = u['chat']
     nodes.append(dict(id=f'{uid}-ai', title='Conversación', icon='💬', kind='conversation', skillIds=[vid(h) for h in u['words'][:8]],
                       scenario={k: v for k, v in dict(goal=chat['goal'], persona=chat['persona'], role=chat.get('role')).items() if v}))

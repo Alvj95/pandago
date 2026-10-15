@@ -9783,6 +9783,13 @@ export const UNITS: Unit[] = [
         ]
       },
       {
+        "id": "u1-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
+        "skillIds": []
+      },
+      {
         "id": "u1-ai",
         "title": "Conversación",
         "icon": "💬",
@@ -9934,6 +9941,13 @@ export const UNITS: Unit[] = [
         "title": "Cofre",
         "icon": "🎁",
         "kind": "chest",
+        "skillIds": []
+      },
+      {
+        "id": "u2-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
         "skillIds": []
       },
       {
@@ -10108,6 +10122,13 @@ export const UNITS: Unit[] = [
         ]
       },
       {
+        "id": "u3-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
+        "skillIds": []
+      },
+      {
         "id": "u3-ai",
         "title": "Conversación",
         "icon": "💬",
@@ -10269,6 +10290,13 @@ export const UNITS: Unit[] = [
           "h1-少",
           "h1-多"
         ]
+      },
+      {
+        "id": "u4-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
+        "skillIds": []
       },
       {
         "id": "u4-ai",
@@ -10445,6 +10473,13 @@ export const UNITS: Unit[] = [
           "h1-下雨",
           "h1-太"
         ]
+      },
+      {
+        "id": "u5-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
+        "skillIds": []
       },
       {
         "id": "u5-ai",
@@ -10634,6 +10669,13 @@ export const UNITS: Unit[] = [
         ]
       },
       {
+        "id": "u6-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
+        "skillIds": []
+      },
+      {
         "id": "u6-ai",
         "title": "Conversación",
         "icon": "💬",
@@ -10801,6 +10843,13 @@ export const UNITS: Unit[] = [
           "h1-会",
           "h1-能"
         ]
+      },
+      {
+        "id": "u7-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
+        "skillIds": []
       },
       {
         "id": "u7-ai",
@@ -10979,6 +11028,13 @@ export const UNITS: Unit[] = [
         ]
       },
       {
+        "id": "u8-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
+        "skillIds": []
+      },
+      {
         "id": "u8-ai",
         "title": "Conversación",
         "icon": "💬",
@@ -11146,6 +11202,13 @@ export const UNITS: Unit[] = [
         ]
       },
       {
+        "id": "u9-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
+        "skillIds": []
+      },
+      {
         "id": "u9-ai",
         "title": "Conversación",
         "icon": "💬",
@@ -11305,6 +11368,13 @@ export const UNITS: Unit[] = [
           "h2-快乐",
           "h2-欢迎"
         ]
+      },
+      {
+        "id": "u10-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
+        "skillIds": []
       },
       {
         "id": "u10-ai",
@@ -11467,6 +11537,13 @@ export const UNITS: Unit[] = [
           "h2-忙",
           "h2-累"
         ]
+      },
+      {
+        "id": "u11-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
+        "skillIds": []
       },
       {
         "id": "u11-ai",
@@ -11632,6 +11709,13 @@ export const UNITS: Unit[] = [
         ]
       },
       {
+        "id": "u12-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
+        "skillIds": []
+      },
+      {
         "id": "u12-ai",
         "title": "Conversación",
         "icon": "💬",
@@ -11792,6 +11876,13 @@ export const UNITS: Unit[] = [
         ]
       },
       {
+        "id": "u13-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
+        "skillIds": []
+      },
+      {
         "id": "u13-ai",
         "title": "Conversación",
         "icon": "💬",
@@ -11941,6 +12032,13 @@ export const UNITS: Unit[] = [
         "title": "Cofre",
         "icon": "🎁",
         "kind": "chest",
+        "skillIds": []
+      },
+      {
+        "id": "u14-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
         "skillIds": []
       },
       {
@@ -12105,6 +12203,13 @@ export const UNITS: Unit[] = [
           "h2-让",
           "h2-希望"
         ]
+      },
+      {
+        "id": "u15-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
+        "skillIds": []
       },
       {
         "id": "u15-ai",
@@ -12299,6 +12404,13 @@ export const UNITS: Unit[] = [
           "h2-阴",
           "h2-再"
         ]
+      },
+      {
+        "id": "u16-story",
+        "title": "Historias",
+        "icon": "📖",
+        "kind": "story",
+        "skillIds": []
       },
       {
         "id": "u16-ai",

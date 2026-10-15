@@ -57,7 +57,7 @@ export interface LessonNode {
   id: string;
   title: string;
   icon: string;
-  kind: 'lesson' | 'chest' | 'conversation' | 'boss';
+  kind: 'lesson' | 'chest' | 'story' | 'conversation' | 'boss';
   /** Ítems de vocabulario/gramática que la lección introduce o repasa. */
   skillIds: string[];
   /** Solo en nodos de conversación. */

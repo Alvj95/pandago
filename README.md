@@ -131,7 +131,7 @@ pandago/
 
 ## Más formas de practicar (pestaña Practicar)
 
-- **📖 Historias con Bao**: 16 mini cuentos (uno por unidad) narrados con voz; toca cualquier palabra para ver pinyin y significado, modo «solo escuchar», traducción opcional y preguntas de comprensión.
+- **📖 Historias con Bao**: 48 mini cuentos (tres por unidad, y un nodo 📖 en el camino de cada unidad) narrados con voz; toca cualquier palabra para ver pinyin y significado, modo «solo escuchar», traducción opcional y preguntas de comprensión.
 - **🎵 Entrenador de tonos**: escucha y elige la curva del tono en 3 niveles (una sílaba, dos sílabas, tono neutro y cambios de tono como 你好 = 2+3), con estadísticas del tono que más confundes.
 - **⚡ Retos rápidos**: relámpago (5 seguidas en 60 s), ¿qué has oído?, verdadero o falso, completa la frase y «repara tus errores». Superarlos da **+1 vida** (máx. 3 al día): ya no hace falta esperar 30 minutos.
 - **🎯 Misiones diarias** (3 al día + 1 semanal) con gemas y cofre, y **🏅 logros** en el Perfil.
