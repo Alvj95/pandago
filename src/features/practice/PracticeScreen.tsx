@@ -74,6 +74,19 @@ export function PracticeScreen() {
           </Card>
         </PressableScale>
 
+        <PressableScale onPress={() => router.push('/phrases')} accessibilityRole="button" accessibilityLabel="Frases de supervivencia">
+          <Card index={2}>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <Text style={styles.icon}>🧳</Text>
+              <View style={styles.flex}>
+                <Text style={[type.title, { color: c.textPrimary }]}>Frases de supervivencia</Text>
+                <Text style={[type.body, { color: c.textSecondary }]}>Restaurante, taxi, hotel, emergencias… listas para usar en China</Text>
+              </View>
+              <Text style={[type.title, { color: c.textSecondary }]}>›</Text>
+            </View>
+          </Card>
+        </PressableScale>
+
         <PressableScale onPress={() => router.push('/exam')} accessibilityRole="button" accessibilityLabel="Simulacro HSK">
           <Card index={2}>
             <View style={[styles.row, { gap: spacing.sm }]}>
