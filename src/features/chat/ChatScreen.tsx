@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { FlatList, KeyboardAvoidingView, Pressable, StyleSheet, Text, View } from 'react-native';
-import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder } from 'expo-audio';
 import { useRouter } from 'expo-router';
 import { exitTo } from '@/lib/navigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,7 +15,8 @@ import { hasChineseVoice, needsDeviceVoice, speakChinese, stopSpeaking } from '@
 import { useTheme } from '@/theme';
 import { MessageBubble } from './components/MessageBubble';
 import { TaskInput } from './components/TaskInput';
-import { assessPronunciation, requestTutorTurn } from './engine/aiClient';
+import { requestTutorTurn } from './engine/aiClient';
+import { useVoiceInput } from './useVoiceInput';
 import type { Scenario, TutorTurn, UserInput } from './engine/contract';
 import { buildTurnRequest, chatReducer, checkGapLocally, initChat } from './engine/orchestrator';
 import type { LessonNode } from '@/data/hsk/types';
@@ -35,7 +35,7 @@ export function ChatScreen({ scenario, node }: { scenario: Scenario; node?: Less
   const completeNode = useProgressStore((s) => s.completeNode);
   /** Tutor local que toma el relevo si el backend de IA no responde. */
   const offline = useRef<OfflineTutor | null>(null);
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const mic = useVoiceInput();
   const listRef = useRef<FlatList>(null);
   const voice = useSettingsStore((s) => s.voice);
   const setVoice = useSettingsStore((s) => s.setVoice);
@@ -116,58 +116,28 @@ export function ChatScreen({ scenario, node }: { scenario: Scenario; node?: Less
     void send({ kind: 'gap_choice', choice }, choice);
   };
 
-  const recordStartedAt = useRef(0);
-
   /** Toca para empezar a grabar y otra vez para terminar (más fiable que mantener pulsado). */
   const onMic = async () => {
     if (state.phase === 'recording') return stopAndAssess();
     if (state.phase !== 'await_user') return;
-    try {
-      const perm = await requestRecordingPermissionsAsync();
-      if (!perm.granted) {
-        dispatch({ type: 'voice_failed', message: '🎙️ Necesito permiso para usar el micrófono. Actívalo en Ajustes → Aplicaciones → PandaGO! → Permisos.' });
-        return;
-      }
-      stopSpeaking(); // que Bao no hable mientras grabas
-      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
-      await recorder.prepareToRecordAsync();
-      recorder.record();
-      recordStartedAt.current = Date.now();
-      dispatch({ type: 'record_start' });
-    } catch {
-      dispatch({ type: 'voice_failed', message: '🎙️ No he podido abrir el micrófono. Cierra otras apps que lo estén usando y vuelve a intentarlo.' });
+    const err = await mic.start();
+    if (err) {
+      dispatch({ type: 'voice_failed', message: err });
+      return;
     }
+    dispatch({ type: 'record_start' });
   };
 
   const stopAndAssess = async () => {
-    const seconds = (Date.now() - recordStartedAt.current) / 1000;
-    try {
-      await recorder.stop();
-    } catch {
-      // si ya estaba parado, seguimos con lo grabado
-    }
-    await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
-    if (seconds < 0.8) {
-      dispatch({ type: 'voice_failed', message: '🎙️ Ha sido muy corto. Toca el micrófono, di la frase y vuelve a tocar para terminar.' });
-      return;
-    }
     dispatch({ type: 'record_stop' });
     const target = state.task?.type === 'repeat_aloud' ? state.task : null;
     const expected = target?.hanzi ?? '';
-    let result: Awaited<ReturnType<typeof assessPronunciation>>;
-    try {
-      result = await assessPronunciation(recorder.uri ?? '', expected, await getAuthToken());
-    } catch {
-      dispatch({
-        type: 'voice_failed',
-        message: '🎙️ El reconocimiento de voz no está disponible ahora mismo (sin conexión o se acabó la cuota del día). Puedes escribir tu respuesta.',
-      });
+    const r = await mic.stop(expected);
+    if (!r.ok) {
+      dispatch({ type: 'voice_failed', message: r.message });
       return;
     }
-    if (!/\p{Script=Han}/u.test(result.transcript)) {
-      dispatch({ type: 'voice_failed', message: '🙉 No he oído nada en chino. Habla más cerca del micrófono y un poco más alto.' });
-      return;
-    }
+    const result = r.result;
     try {
       let score = 1;
       let lights: string | null = null;

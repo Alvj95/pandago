@@ -1,20 +1,32 @@
-import { useRef, useState } from 'react';
-import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder } from 'expo-audio';
+import { useEffect, useRef, useState } from 'react';
+import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import { getAuthToken } from '@/lib/auth';
 import { stopSpeaking } from '@/lib/speech';
 import { assessPronunciation, type PronunciationResult } from './engine/aiClient';
 
-export type VoiceResult = { ok: true; result: PronunciationResult } | { ok: false; message: string };
+export type VoiceResult = { ok: true; result: PronunciationResult; level: number } | { ok: false; message: string; level?: number };
+
+/** Voz: AAC mono (más ligero de subir) y con medidor de volumen para detectar un micrófono mudo. */
+export const VOICE_PRESET = { ...RecordingPresets.HIGH_QUALITY, numberOfChannels: 1, bitRate: 96000, isMeteringEnabled: true };
+
+/** Por debajo de este volumen máximo (dB) la grabación está prácticamente en silencio. */
+export const SILENT_DB = -50;
 
 /**
  * Micrófono de «toca para hablar, toca para terminar» con mensajes claros para
- * cada fallo (permiso, demasiado corto, sin servicio, no se oyó chino).
- * Lo usan la llamada con Bao y la práctica de pronunciación.
+ * cada fallo (permiso, demasiado corto, silencio, sin servicio, no se oyó chino).
  */
 export function useVoiceInput() {
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorder = useAudioRecorder(VOICE_PRESET);
+  const state = useAudioRecorderState(recorder, 120);
   const [recording, setRecording] = useState(false);
   const startedAt = useRef(0);
+  const peak = useRef(-160);
+
+  // Guarda el volumen más alto mientras se graba.
+  useEffect(() => {
+    if (recording && typeof state.metering === 'number') peak.current = Math.max(peak.current, state.metering);
+  }, [recording, state.metering]);
 
   /** Empieza a grabar; devuelve un mensaje si no se pudo. */
   const start = async (): Promise<string | null> => {
@@ -26,10 +38,11 @@ export function useVoiceInput() {
       await recorder.prepareToRecordAsync();
       recorder.record();
       startedAt.current = Date.now();
+      peak.current = -160;
       setRecording(true);
       return null;
-    } catch {
-      return '🎙️ No he podido abrir el micrófono. Cierra otras apps que lo estén usando y vuelve a intentarlo.';
+    } catch (err) {
+      return `🎙️ No he podido abrir el micrófono. Cierra otras apps que lo estén usando y vuelve a intentarlo. (${String(err).slice(0, 80)})`;
     }
   };
 
@@ -43,15 +56,22 @@ export function useVoiceInput() {
       // si ya estaba parado, seguimos con lo grabado
     }
     await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
-    if (seconds < 0.8) return { ok: false, message: '🎙️ Ha sido muy corto. Toca el micrófono, habla y vuelve a tocar para terminar.' };
+    const level = peak.current;
+    if (seconds < 0.8) return { ok: false, level, message: '🎙️ Ha sido muy corto. Toca el micrófono, habla y vuelve a tocar para terminar.' };
+    // -160 = el medidor no informó (algunos móviles): no lo tomamos como silencio.
+    if (level > -160 && level < SILENT_DB) {
+      return { ok: false, level, message: `🎙️ El micrófono no capta tu voz (volumen ${Math.round(level)} dB). Habla más cerca, revisa que no esté tapado o prueba en Perfil → «Probar micrófono».` };
+    }
     let result: PronunciationResult;
     try {
       result = await assessPronunciation(recorder.uri ?? '', expected, await getAuthToken());
-    } catch {
-      return { ok: false, message: '🎙️ El reconocimiento de voz no está disponible ahora mismo (sin conexión o se acabó la cuota del día).' };
+    } catch (err) {
+      return { ok: false, level, message: `🎙️ El reconocimiento de voz no ha respondido (${err instanceof Error ? err.message : String(err)}). Puedes escribir tu respuesta.` };
     }
-    if (!/\p{Script=Han}/u.test(result.transcript)) return { ok: false, message: '🙉 No he oído nada en chino. Habla más cerca del micrófono y un poco más alto.' };
-    return { ok: true, result };
+    if (!/\p{Script=Han}/u.test(result.transcript)) {
+      return { ok: false, level, message: `🙉 No he oído nada en chino${result.transcript.trim() ? ` (entendí «${result.transcript.trim().slice(0, 40)}»)` : ''}. Habla más cerca del micrófono y un poco más alto.` };
+    }
+    return { ok: true, result, level };
   };
 
   /** Para sin evaluar (al salir de la pantalla). */
@@ -62,5 +82,5 @@ export function useVoiceInput() {
     void setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
   };
 
-  return { recording, start, stop, cancel };
+  return { recording, start, stop, cancel, recorder, metering: state.metering };
 }

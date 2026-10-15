@@ -56,13 +56,23 @@ export async function assessPronunciation(audioUri: string, expectedHanzi: strin
   }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 25_000);
-  const res = await fetch(`${API_URL}/v1/speech/assess`, {
-    method: 'POST',
-    headers: { authorization: `Bearer ${authToken}` },
-    body: form,
-    signal: controller.signal,
-  }).finally(() => clearTimeout(timer));
-  if (!res.ok) throw new TutorUnavailableError(`speech ${res.status}`);
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/v1/speech/assess`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${authToken}` },
+      body: form,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    throw new TutorUnavailableError(controller.signal.aborted ? 'sin respuesta en 25 s' : `sin conexión (${String(err).slice(0, 80)})`);
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: string; detail?: string } | null;
+    throw new TutorUnavailableError(`HTTP ${res.status}${body?.detail ? `: ${body.detail.slice(0, 120)}` : body?.error ? `: ${body.error}` : ''}`);
+  }
   return (await res.json()) as PronunciationResult;
 }
 

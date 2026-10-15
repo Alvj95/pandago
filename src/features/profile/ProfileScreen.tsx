@@ -173,6 +173,7 @@ export function ProfileScreen() {
                 {voiceStyle === 'natural' ? 'Suena como una persona. Necesita internet: sin conexión, Bao usa la voz del móvil.' : 'Funciona sin internet. Necesita la voz «Chino (China)» instalada en el móvil.'}
               </Text>
             </View>
+            <Button3D label="🎙️ Probar micrófono" variant="ghost" onPress={() => router.push('/mic-test')} />
             <View style={styles.between}>
               <Text style={[type.body, { color: c.textPrimary }]}>🐢 Bao habla más despacio</Text>
               <Switch value={slowVoice} onValueChange={setSlowVoice} trackColor={{ true: c.success, false: c.locked }} accessibilityLabel="Bao habla más despacio" />

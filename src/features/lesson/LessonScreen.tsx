@@ -18,6 +18,7 @@ import { UNITS, VOCAB } from '@/data/hsk/course';
 import { BaoPopup } from './components/BaoPopup';
 import { freshMemory, nextPopup, type PopupLine, tipFrom } from './popups';
 import { useSettingsStore } from '@/store/useSettingsStore';
+import { usePetStore } from '@/store/usePetStore';
 import { AskBaoSheet } from './components/AskBaoSheet';
 import { LessonHeader } from './components/LessonHeader';
 import { askContextOf, quickQuestions } from './askContext';
@@ -94,6 +95,8 @@ export function LessonScreen({ exercises, node, level, costsHearts = true, intro
     progress.awardXp(summary.xp);
     if (node) progress.completeNode(node);
     if (node?.kind === 'boss') progress.earnGems(BOSS_GEMS);
+    // Cada lección llena la despensa de Bao (2 si es perfecta).
+    if (node) usePetStore.getState().addFood(summary.perfect ? 2 : 1);
     if (node) {
       trackQuest('lesson');
       if (summary.perfect) trackQuest('perfect_lesson');
