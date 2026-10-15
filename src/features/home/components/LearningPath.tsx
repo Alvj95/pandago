@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Card } from '@/components/ui';
+import { useRouter } from 'expo-router';
+import { Card, PressableScale } from '@/components/ui';
 import type { LessonNode, Unit } from '@/data/hsk/types';
 import { useProgressStore } from '@/store/useProgressStore';
 import { useTheme } from '@/theme';
@@ -12,7 +13,8 @@ interface Props {
 
 /** Camino serpenteante de unidades. El desplazamiento horizontal sigue una onda senoidal. */
 export function LearningPath({ units, onOpenNode }: Props) {
-  const { c, type, spacing } = useTheme();
+  const { c, type, spacing, radius } = useTheme();
+  const router = useRouter();
   const completed = useProgressStore((s) => s.completedNodeIds);
 
   // El primer nodo no completado (en orden global) es el "actual".
@@ -34,6 +36,15 @@ export function LearningPath({ units, onOpenNode }: Props) {
               </Text>
               <Text style={[type.title, styles.onBrand]}>{unit.title}</Text>
               <Text style={[type.body, styles.onBrand, { opacity: 0.9 }]}>{unit.description}</Text>
+              <PressableScale
+                onPress={() => router.push(`/guide/${unit.id}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`Guía de la unidad ${unit.title}`}
+                containerStyle={styles.guideWrap}
+                style={[styles.guide, { borderRadius: radius.sm, paddingHorizontal: spacing.sm, paddingVertical: 6, marginTop: spacing.sm }]}
+              >
+                <Text style={[type.caption, styles.onBrand]}>📘 GUÍA: GRAMÁTICA Y VOCABULARIO</Text>
+              </PressableScale>
             </Card>
             <View style={{ paddingVertical: spacing.sm }}>
               {unit.nodes.map((node, i) => (
@@ -57,4 +68,6 @@ export function LearningPath({ units, onOpenNode }: Props) {
 
 const styles = StyleSheet.create({
   onBrand: { color: '#FFFFFF' },
+  guideWrap: { alignSelf: 'flex-start' },
+  guide: { backgroundColor: 'rgba(255,255,255,0.22)', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.6)' },
 });

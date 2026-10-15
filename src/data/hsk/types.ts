@@ -16,6 +16,33 @@ export interface VocabItem {
   level: HskLevel;
   /** Ids de gramática / palabras que conviene conocer antes. */
   prereqs?: string[];
+  /** Nota de uso (gramática, cambios de tono, matices) para la ficha de la palabra. */
+  note?: string;
+  /** Frase de ejemplo del curso que usa la palabra. */
+  example?: Example;
+}
+
+/** Frase de ejemplo lista para mostrar (hanzi con puntuación). */
+export interface Example {
+  hanzi: string;
+  pinyin: string;
+  meaning: string;
+}
+
+/** Explicación de gramática de una unidad. */
+export interface GrammarNote {
+  title: string;
+  /** Esquema corto: "A + 是 + B". */
+  pattern: string;
+  body: string;
+  examples: Example[];
+}
+
+export interface UnitGuide {
+  intro: string;
+  notes: GrammarNote[];
+  /** Curiosidad cultural. */
+  culture: string;
 }
 
 export interface ConversationSetup {
@@ -54,5 +81,6 @@ export interface Unit {
   title: string;
   description: string;
   color: 'primary' | 'success' | 'info' | 'league';
+  guide: UnitGuide;
   nodes: LessonNode[];
 }

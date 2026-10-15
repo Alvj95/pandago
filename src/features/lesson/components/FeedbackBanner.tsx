@@ -10,12 +10,14 @@ const COMBO = (n: number) => (n >= 5 ? `🔥 ¡${n} seguidas!` : null);
 interface Props {
   correct: boolean;
   solution: string;
+  /** Explicación (palabra, pinyin, significado, nota) — se muestra siempre. */
+  explain?: string;
   combo: number;
   onContinue: () => void;
 }
 
 /** Hoja inferior que sube tras comprobar: verde con Bao saltando o roja con Bao animando. */
-export function FeedbackBanner({ correct, solution, combo, onContinue }: Props) {
+export function FeedbackBanner({ correct, solution, explain, combo, onContinue }: Props) {
   const { c, type, spacing } = useTheme();
   const title = correct ? (COMBO(combo) ?? PRAISE[combo % PRAISE.length]) : 'Solución correcta:';
 
@@ -30,6 +32,7 @@ export function FeedbackBanner({ correct, solution, combo, onContinue }: Props) 
         <View style={styles.flex}>
           <Text style={[type.title, { color: correct ? c.successLip : c.danger }]}>{title}</Text>
           {!correct && solution ? <Text style={[type.hanzi, { color: c.danger, fontSize: 22, lineHeight: 30 }]}>{solution}</Text> : null}
+          {explain ? <Text style={[type.body, { color: c.textPrimary, fontSize: 14, lineHeight: 19 }]}>📖 {explain}</Text> : null}
           {!correct && <Text style={[type.caption, { color: c.danger }]}>Lo repasaremos al final 💪</Text>}
         </View>
       </View>

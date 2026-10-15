@@ -19,6 +19,14 @@ export default function Lesson() {
     return build(node.skillIds, LOCAL_CONTENT, createRng(seed), unitOfNode(node.id)?.id);
   }, [node, seed]);
 
+  // Las lecciones del camino enseñan primero sus palabras; la primera de cada unidad, también su gramática.
+  const intro = useMemo(() => {
+    if (node?.kind !== 'lesson') return undefined;
+    const unit = unitOfNode(node.id);
+    const words = node.skillIds.map((sid) => LOCAL_CONTENT.vocab.find((v) => v.id === sid)).filter((v) => v !== undefined);
+    return { words, unit: unit?.nodes.find((n) => n.kind === 'lesson')?.id === node.id ? unit : undefined };
+  }, [node]);
+
   if (!node || !exercises.length) return <ComingSoon title="Lección" />;
-  return <LessonScreen exercises={exercises} node={node} level={level} />;
+  return <LessonScreen exercises={exercises} node={node} level={level} intro={intro} />;
 }

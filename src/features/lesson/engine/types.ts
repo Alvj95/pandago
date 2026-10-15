@@ -20,6 +20,8 @@ export type Exercise =
       speak?: string;
       options: ChoiceOption[];
       answerIndex: number;
+      /** Explicación que se muestra al corregir: palabra, pinyin, significado y nota de uso. */
+      explain: string;
     }
   | {
       kind: 'sentence_order';
@@ -70,6 +72,8 @@ export interface GradeResult {
   score: number;
   /** Solución a mostrar si falló. */
   solution: string;
+  /** Explicación didáctica tras corregir (acierto o fallo). */
+  explain?: string;
   /** Observaciones para el motor adaptativo (una por ítem practicado). */
   observations: { itemId: string; dimension: Dimension; score: number }[];
 }

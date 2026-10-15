@@ -5,7 +5,7 @@ import { exitTo } from '@/lib/navigation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button3D } from '@/components/ui';
 import { levelDifficulty } from '@/features/learning/adaptive/learnerModel';
-import type { HskLevel, LessonNode } from '@/data/hsk/types';
+import type { HskLevel, LessonNode, Unit, VocabItem } from '@/data/hsk/types';
 import { feedback } from '@/lib/haptics';
 import { useLearnerStore } from '@/store/useLearnerStore';
 import { BOSS_GEMS } from '@/features/rewards/chest';
@@ -14,6 +14,7 @@ import { useTheme } from '@/theme';
 import { FeedbackBanner } from './components/FeedbackBanner';
 import { LessonComplete, OutOfHearts } from './components/LessonEnd';
 import { LessonHeader } from './components/LessonHeader';
+import { LessonIntro } from './components/LessonIntro';
 import { MatchPairs } from './components/MatchPairs';
 import { MultipleChoice } from './components/MultipleChoice';
 import { SentenceOrder } from './components/SentenceOrder';
@@ -31,9 +32,11 @@ interface Props {
   level: HskLevel;
   /** Los repasos no cuestan vidas (se practica sin presión). */
   costsHearts?: boolean;
+  /** Palabras nuevas (y gramática de la unidad) que se enseñan antes de los ejercicios. */
+  intro?: { words: VocabItem[]; unit?: Unit };
 }
 
-export function LessonScreen({ exercises, node, level, costsHearts = true }: Props) {
+export function LessonScreen({ exercises, node, level, costsHearts = true, intro }: Props) {
   const { c, type, spacing } = useTheme();
   const router = useRouter();
   const progress = useProgressStore();
@@ -42,6 +45,7 @@ export function LessonScreen({ exercises, node, level, costsHearts = true }: Pro
   const [choice, setChoice] = useState<number | null>(null);
   const [order, setOrder] = useState<number[]>([]);
   const rewarded = useRef(false);
+  const [learning, setLearning] = useState(!!intro?.words.length);
 
   const ex = state.queue[state.index];
   const revealed = state.phase === 'feedback';
@@ -68,6 +72,14 @@ export function LessonScreen({ exercises, node, level, costsHearts = true }: Pro
     if (node?.kind === 'boss') progress.earnGems(BOSS_GEMS);
     void feedback.levelUp();
   }, [summary, node, progress]);
+
+  if (learning && intro) {
+    return (
+      <SafeAreaView style={[styles.flex, { backgroundColor: c.background }]}>
+        <LessonIntro words={intro.words} unit={intro.unit} onDone={() => setLearning(false)} onClose={() => exitTo(router)} />
+      </SafeAreaView>
+    );
+  }
 
   const noHearts = state.phase === 'out_of_hearts' || (costsHearts && state.hearts === 0 && state.phase === 'answering');
   if (noHearts) {
@@ -120,7 +132,7 @@ export function LessonScreen({ exercises, node, level, costsHearts = true }: Pro
       </ScrollView>
 
       {revealed && state.last ? (
-        <FeedbackBanner correct={state.last.correct} solution={state.last.solution} combo={state.combo} onContinue={() => {
+        <FeedbackBanner correct={state.last.correct} solution={state.last.solution} explain={state.last.explain} combo={state.combo} onContinue={() => {
             // La selección local se limpia al pasar al siguiente ejercicio.
             setChoice(null);
             setOrder([]);

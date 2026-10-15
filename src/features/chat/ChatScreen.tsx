@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
+import { FlatList, KeyboardAvoidingView, Pressable, StyleSheet, Text, View } from 'react-native';
 import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder } from 'expo-audio';
 import { useRouter } from 'expo-router';
 import { exitTo } from '@/lib/navigation';
@@ -10,6 +10,8 @@ import { getAuthToken } from '@/lib/auth';
 import { feedback } from '@/lib/haptics';
 import { useLearnerStore } from '@/store/useLearnerStore';
 import { useProgressStore } from '@/store/useProgressStore';
+import { useSettingsStore } from '@/store/useSettingsStore';
+import { hasChineseVoice, speakChinese, stopSpeaking } from '@/lib/speech';
 import { useTheme } from '@/theme';
 import { MessageBubble } from './components/MessageBubble';
 import { TaskInput } from './components/TaskInput';
@@ -34,6 +36,9 @@ export function ChatScreen({ scenario, node }: { scenario: Scenario; node?: Less
   const offline = useRef<OfflineTutor | null>(null);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const listRef = useRef<FlatList>(null);
+  const voice = useSettingsStore((s) => s.voice);
+  const setVoice = useSettingsStore((s) => s.setVoice);
+  const spokenId = useRef<string | null>(null);
 
   const learnFrom = useCallback(
     (turn: TutorTurn) => {
@@ -76,6 +81,21 @@ export function ChatScreen({ scenario, node }: { scenario: Scenario; node?: Less
   useEffect(() => {
     if (state.phase === 'idle') void send(null);
   }, [state.phase, send]);
+
+  // Bao habla: cada respuesta nueva del tutor se lee en voz alta (TTS zh-CN).
+  const lastTutor = [...state.messages].reverse().find((m) => m.from === 'tutor');
+  useEffect(() => {
+    if (!lastTutor || lastTutor.from !== 'tutor' || spokenId.current === lastTutor.id) return;
+    spokenId.current = lastTutor.id;
+    speakChinese(lastTutor.turn.reply.hanzi);
+  }, [lastTutor]);
+
+  useEffect(() => {
+    void hasChineseVoice().then((ok) => {
+      if (!ok) dispatch({ type: 'notice', text: 'Tu móvil no tiene voz china instalada. Ve a Ajustes → Texto a voz → instala «Chino (China)» para oír a Bao 🔊' });
+    });
+    return () => void stopSpeaking();
+  }, []);
 
   useEffect(() => {
     if (state.phase === 'finished') {
@@ -136,10 +156,24 @@ export function ChatScreen({ scenario, node }: { scenario: Scenario; node?: Less
             {busy ? 'Bao está escribiendo…' : `🎯 ${scenario.goal}`}
           </Text>
         </View>
-        <Text style={[type.caption, { color: c.xpText }]}>+{state.xpEarned} XP</Text>
+        <View style={{ alignItems: 'flex-end', gap: 2 }}>
+          <Pressable
+            onPress={() => {
+              if (voice) stopSpeaking();
+              setVoice(!voice);
+            }}
+            hitSlop={10}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: voice }}
+            accessibilityLabel="Voz de Bao"
+          >
+            <Text style={{ fontSize: 24 }}>{voice ? '🔊' : '🔇'}</Text>
+          </Pressable>
+          <Text style={[type.caption, { color: c.xpText }]}>+{state.xpEarned} XP</Text>
+        </View>
       </View>
 
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <FlatList
           ref={listRef}
           data={state.messages}

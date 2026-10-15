@@ -112,6 +112,7 @@ pandago/
 
 - **Paleta "panda rojo"**: naranja Bao `#FF6B2C` (acción principal), verde bambú (acierto), cereza (error/vidas), oro (XP/cofres), violeta (ligas). Todos los componentes usan **roles semánticos** (`c.primary`, `c.successSoft`…) que cambian entre claro y oscuro; ningún componente usa un hex directo.
 - **Profundidad táctil**: tarjetas y botones con *labio* inferior de 4 px; al pulsar, la cara baja y tapa el labio (`Button3D`), y todo lo pulsable encoge con resorte + háptica (`PressableScale`).
+- **Chat con voz**: Bao lee en voz alta cada respuesta (se puede silenciar con 🔊/🔇 o en Perfil), muestra la traducción, una explicación («Bao te explica») y el desglose palabra por palabra.
 - **Tipografía**: Nunito (redonda, amable) para el latín y Noto Sans SC para los hanzi.
 - **Bao** reacciona a todo: respira en reposo, salta con destellos al acertar, gira al completar, se estremece y anima al fallar, inclina la cabeza mientras la IA "piensa".
 - **Camino serpenteante** (onda senoidal) con nodos completados ⭐, nodo actual flotando con "EMPEZAR", cofres que se agitan y nodos bloqueados 🔒.
@@ -119,8 +120,11 @@ pandago/
 ## Contenido: HSK 1 y HSK 2 completos
 
 - **298 palabras**: las 150 de HSK 1 y 147 de HSK 2 de la lista oficial ([complete-hsk-vocabulary](https://github.com/drkameleon/complete-hsk-vocabulary), MIT) más «你好», con significado en español, la lectura correcta de las palabras con varias pronunciaciones y tonos por sílaba.
-- **16 unidades temáticas** (8 por nivel: Saludos, Números, Familia, Comida, El tiempo, La ciudad, Mi día, Mi mundo · Describir, Personas, Rutina, De compras, Moverse, Salud y deporte, En clase, Conectar ideas), **71 frases** para ordenar y **orden de trazos de los 346 caracteres**.
+- **16 unidades temáticas** (8 por nivel: Saludos, Números, Familia, Comida, El tiempo, La ciudad, Mi día, Mi mundo · Describir, Personas, Rutina, De compras, Moverse, Salud y deporte, En clase, Conectar ideas), **278 frases** para ordenar y **orden de trazos de los 346 caracteres**.
 - Cada unidad: 3-4 lecciones → 🎁 cofre → 💬 conversación → 🏆 desafío.
+- **Aprende antes de practicar**: cada lección empieza con fichas de las palabras nuevas (hanzi y pinyin coloreados por tono, audio, carácter a carácter, nota de uso y frase de ejemplo). La primera lección de cada unidad presenta además su gramática.
+- **📘 Guía de cada unidad** (botón en la tarjeta de la unidad): 3-4 explicaciones de gramática con esquema y ejemplos con audio, una curiosidad cultural y todo el vocabulario.
+- Al corregir, cada ejercicio explica la palabra o la frase (pinyin, significado y cómo se usa).
   - **Cofre**: se abre con animación y da gemas (y a veces un protector de racha). Cumplir la meta diaria también regala un cofre.
   - **Conversación**: con el tutor IA si hay servidor; si no hay conexión, Bao practica con frases de la unidad (huecos corregidos en el móvil), así el camino nunca se bloquea.
   - **Desafío**: examen con todo el vocabulario de la unidad; superarlo da 30 💎.

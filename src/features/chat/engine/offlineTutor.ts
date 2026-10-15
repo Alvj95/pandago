@@ -48,7 +48,7 @@ export function createOfflineTutor(scenario: Scenario, sentences: SampleSentence
 
   let round = 0;
   const base = (over: Partial<TutorTurn> & Pick<TutorTurn, 'reply'>): TutorTurn => ({
-    corrections: [], task_score: 1, bao_mood: 'talking', hint: null,
+    corrections: [], task_score: 1, bao_mood: 'talking', hint: null, explanation: null,
     next_task: gaps[round]?.task ?? { type: 'open_question' }, used_item_ids: [], scenario_complete: false, ...over,
   });
 
@@ -61,6 +61,9 @@ export function createOfflineTutor(scenario: Scenario, sentences: SampleSentence
           translation: `¡Hola! Practiquemos juntos: ${scenario.goal.charAt(0).toLowerCase()}${scenario.goal.slice(1)}. Completa las frases.`,
         },
         hint: gaps[0] ? `Pista: «${gaps[0].sentence.meaning}»` : null,
+        explanation:
+          'Te leo cada frase en voz alta. Elige la palabra que falta: la pista te dice qué significa la frase. ' +
+          'Después te explico la palabra y puedes ver la frase palabra por palabra. Toca mis mensajes para volver a oírlos.',
       }),
 
     reply: (input) => {
@@ -72,6 +75,8 @@ export function createOfflineTutor(scenario: Scenario, sentences: SampleSentence
       const done = round >= gaps.length;
       const full = gap.sentence.tokens.join('');
       const next = gaps[round];
+      const word = `«${gap.answer.hanzi}» (${gap.answer.pinyin}) significa «${gap.answer.meaning}».${gap.answer.note ? ` ${gap.answer.note}` : ''}`;
+      const picked = vocab.find((v) => v.hanzi === choice.trim());
       return base({
         reply: { hanzi: full, pinyin: gap.sentence.pinyin, translation: gap.sentence.meaning },
         corrections: correct
@@ -79,10 +84,13 @@ export function createOfflineTutor(scenario: Scenario, sentences: SampleSentence
           : [{
               original: gap.task.template_hanzi.replace('___', choice),
               corrected: full,
-              explanation: `Aquí va «${gap.answer.hanzi}» (${gap.answer.pinyin}): ${gap.answer.meaning}.`,
+              explanation: picked
+                ? `Elegiste «${picked.hanzi}» (${picked.pinyin}), que significa «${picked.meaning}»: no encaja. Aquí va «${gap.answer.hanzi}».`
+                : `Aquí va «${gap.answer.hanzi}» (${gap.answer.pinyin}): ${gap.answer.meaning}.`,
               error_tag: `vocab:${gap.answer.hanzi}`,
               severity: 'minor',
             }],
+        explanation: correct ? `¡Correcto! ${word}` : word,
         task_score: correct ? 1 : 0.3,
         bao_mood: done ? 'celebrate' : correct ? 'happy' : 'encourage',
         hint: next ? `Siguiente: «${next.sentence.meaning}»` : null,

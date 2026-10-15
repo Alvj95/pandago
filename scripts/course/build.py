@@ -3,7 +3,8 @@ Generador del curso de PandaGO! (HSK 1-2).
 
   python3 scripts/course/build.py
 
-Edita words.py (significados) o units.py (unidades, frases, conversaciones)
+Edita words.py (significados), units.py (unidades, frases, conversaciones) o
+guides.py (guías de gramática, notas de uso por palabra, frases extra)
 y vuelve a ejecutarlo: reescribe src/data/hsk/course.ts y
 src/data/strokes/hsk.strokes.json. Después: npm test.
 """
@@ -12,6 +13,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from words import W
 from units import U
+from guides import G, NOTES, MORE
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
 CACHE = os.path.join(HERE, '.cache')
 DATA = os.path.join(CACHE, 'hsk')
@@ -78,13 +80,36 @@ vid = lambda h: f'h{level_of[h]}-{h}'
 vocab = [dict(id=vid(h), hanzi=h, pinyin=W[h][0], tones=tones_for(h, W[h][0]), meaning=W[h][1], level=level_of[h])
          for u in U for h in u['words']]
 
-# ---- Frases ----
+# ---- Frases (las de la unidad + extra + ejemplos de las guías) ----
+if len(G) != len(U) or len(MORE) != len(U): problems.append('guides.py: G y MORE deben tener una entrada por unidad')
+for h in NOTES:
+    if h not in W: problems.append(f'nota de palabra fuera del vocabulario: {h}')
 sentences, unknown = [], set()
 for ui, u in enumerate(U):
-    for si, (tokens, py, es) in enumerate(u['sentences']):
+    pool = list(u['sentences']) + list(MORE[ui]) + [e for n in G[ui]['notes'] for e in n['ex']]
+    seen = set()
+    for tokens, py, es in pool:
+        if tuple(tokens) in seen: continue
+        seen.add(tuple(tokens))
         ids = [vid(t) for t in tokens if t in W]
         unknown |= {t for t in tokens if t not in W}
-        sentences.append(dict(id=f'u{ui+1}-s{si+1}', tokens=tokens, pinyin=py, meaning=es, itemIds=list(dict.fromkeys(ids))))
+        sentences.append(dict(id=f'u{ui+1}-s{len(seen)}', tokens=tokens, pinyin=py, meaning=es, itemIds=list(dict.fromkeys(ids))))
+
+def punct(tokens, py):
+    end = '？' if py.rstrip().endswith('?') else '！' if py.rstrip().endswith('!') else '。'
+    return ''.join(tokens) + end
+
+# Ejemplo por palabra: la frase más corta (de 2+ fichas) que la usa, prefiriendo su unidad.
+unit_of_word = {h: ui for ui, u in enumerate(U) for h in u['words']}
+for v in vocab:
+    h = v['hanzi']
+    if h in NOTES: v['note'] = NOTES[h]
+    uses = [s for s in sentences if h in s['tokens']]
+    if not uses: continue
+    own = f"u{unit_of_word[h]+1}-"
+    best = min(uses, key=lambda s: (len(s['tokens']) == 1, not s['id'].startswith(own), abs(len(s['tokens']) - 4)))
+    v['example'] = dict(hanzi=punct(best['tokens'], best['pinyin']), pinyin=best['pinyin'], meaning=best['meaning'])
+no_example = [v['hanzi'] for v in vocab if 'example' not in v]
 
 # ---- Unidades y nodos del camino ----
 def chunks(items, size=6):
@@ -109,7 +134,10 @@ for ui, u in enumerate(U):
     nodes.append(dict(id=f'{uid}-ai', title='Conversación', icon='💬', kind='conversation', skillIds=[vid(h) for h in u['words'][:8]],
                       scenario={k: v for k, v in dict(goal=chat['goal'], persona=chat['persona'], role=chat.get('role')).items() if v}))
     nodes.append(dict(id=f'{uid}-boss', title='Desafío', icon='🏆', kind='boss', skillIds=[vid(h) for h in u['words']]))
-    units.append(dict(id=uid, level=u['level'], index=per_level[u['level']], title=u['title'], description=u['desc'], color=u['color'], nodes=nodes))
+    gd = G[ui]
+    guide = dict(intro=gd['intro'], culture=gd['culture'], notes=[dict(title=n['title'], pattern=n['pattern'], body=n['body'],
+                 examples=[dict(hanzi=punct(t, py), pinyin=py, meaning=es) for t, py, es in n['ex']]) for n in gd['notes']])
+    units.append(dict(id=uid, level=u['level'], index=per_level[u['level']], title=u['title'], description=u['desc'], color=u['color'], guide=guide, nodes=nodes))
 
 # ---- Trazos ----
 chars = sorted({c for v in vocab for c in v['hanzi'] if '一' <= c <= '鿿'})
@@ -123,6 +151,7 @@ for c in chars:
 print('palabras', len(vocab), 'frases', len(sentences), 'unidades', len(units), 'nodos', sum(len(u['nodes']) for u in units))
 print('caracteres', len(chars), 'sin trazos', missing)
 print('fichas fuera del vocabulario:', ' '.join(sorted(unknown)))
+print('notas', sum('note' in v for v in vocab), 'sin ejemplo', len(no_example), ' '.join(no_example))
 for p in problems: print('PROBLEMA', p)
 if problems: sys.exit(1)
 

@@ -50,7 +50,7 @@ describe('modelo del estudiante', () => {
 describe('orquestador del chat', () => {
   const turn = (over: Partial<TutorTurn> = {}): TutorTurn => ({
     reply: { hanzi: '你好', pinyin: 'nǐ hǎo', translation: 'hola' },
-    corrections: [], task_score: 1, bao_mood: 'happy', hint: null,
+    corrections: [], task_score: 1, bao_mood: 'happy', hint: null, explanation: null,
     next_task: { type: 'open_question' }, used_item_ids: [], scenario_complete: false, ...over,
   });
   it('flujo básico y XP', () => {

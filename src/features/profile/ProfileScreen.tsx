@@ -29,6 +29,8 @@ export function ProfileScreen() {
   const model = useLearnerStore((s) => s.model);
   const haptics = useSettingsStore((s) => s.haptics);
   const setHaptics = useSettingsStore((s) => s.setHaptics);
+  const voice = useSettingsStore((s) => s.voice);
+  const setVoice = useSettingsStore((s) => s.setVoice);
   const weaknesses = topWeaknesses(model);
 
   const stats = [
@@ -125,6 +127,10 @@ export function ProfileScreen() {
                   { value: 50, label: 'Intenso' },
                 ]}
               />
+            </View>
+            <View style={styles.between}>
+              <Text style={[type.body, { color: c.textPrimary }]}>🔊 Bao habla en voz alta</Text>
+              <Switch value={voice} onValueChange={setVoice} trackColor={{ true: c.success, false: c.locked }} accessibilityLabel="Bao habla en voz alta" />
             </View>
             <View style={styles.between}>
               <Text style={[type.body, { color: c.textPrimary }]}>📳 Vibración</Text>

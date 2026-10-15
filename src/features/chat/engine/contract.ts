@@ -51,6 +51,11 @@ export const TutorTurn = z.object({
   bao_mood: z.enum(['happy', 'celebrate', 'encourage', 'talking']),
   /** Pista opcional si el usuario parece atascado. */
   hint: z.string().nullable(),
+  /**
+   * Mini-lección en el idioma del usuario sobre la palabra o estructura clave de
+   * la respuesta (qué significa, cómo se usa, por qué ese orden). 1-3 frases.
+   */
+  explanation: z.string().nullable(),
   next_task: NextTask,
   /** Palabras del usuario usadas correctamente (ids de vocabulario HSK) → refuerzan el SRS. */
   used_item_ids: z.array(z.string()),

@@ -48,25 +48,26 @@ function distractors(item: VocabItem, pool: VocabItem[], n: number, rng: Rng): V
 export function multipleChoice(item: VocabItem, mode: Extract<Exercise, { kind: 'multiple_choice' }>['mode'], content: Content, rng: Rng): Exercise {
   const options = shuffle([item, ...distractors(item, content.vocab, 3, rng)], rng);
   const answerIndex = options.indexOf(item);
+  const explain = `${item.hanzi} (${item.pinyin}) = ${item.meaning}.${item.note ? ` ${item.note}` : ''}`;
   switch (mode) {
     case 'hanzi_to_meaning':
       return {
         kind: 'multiple_choice', id: nextId('mc'), itemId: item.id, mode,
         instruction: '¿Qué significa?', question: item.hanzi, questionSub: item.pinyin, speak: item.hanzi,
-        options: options.map((o) => ({ label: o.meaning })), answerIndex,
+        options: options.map((o) => ({ label: o.meaning })), answerIndex, explain,
       };
     case 'meaning_to_hanzi':
       return {
         kind: 'multiple_choice', id: nextId('mc'), itemId: item.id, mode,
         instruction: '¿Cómo se dice en chino?', question: `«${item.meaning}»`,
-        options: options.map((o) => ({ label: o.hanzi, sub: o.pinyin })), answerIndex,
+        options: options.map((o) => ({ label: o.hanzi, sub: o.pinyin })), answerIndex, explain,
       };
     case 'audio_to_hanzi':
       return {
         kind: 'multiple_choice', id: nextId('mc'), itemId: item.id, mode,
         instruction: 'Escucha y elige lo que oyes', question: '🔊', speak: item.hanzi,
         // Sin pinyin: el ejercicio entrena el oído, no la lectura.
-        options: options.map((o) => ({ label: o.hanzi })), answerIndex,
+        options: options.map((o) => ({ label: o.hanzi })), answerIndex, explain,
       };
   }
 }
@@ -178,6 +179,7 @@ export function grade(ex: Exercise, answer: Answer): GradeResult {
         correct,
         score: correct ? 1 : 0,
         solution: sol ? `${sol.label}${sol.sub ? ` (${sol.sub})` : ''}` : '',
+        explain: ex.explain,
         observations: [{ itemId: ex.itemId, dimension: ex.mode === 'audio_to_hanzi' ? 'listening' : 'vocab', score: correct ? 1 : 0 }],
       };
     }
@@ -190,6 +192,7 @@ export function grade(ex: Exercise, answer: Answer): GradeResult {
         correct,
         score: correct ? 1 : positional * 0.6,
         solution: ex.solution.join(''),
+        explain: `${ex.pinyin} — «${ex.meaning}»`,
         observations: ex.itemIds.map((itemId) => ({ itemId, dimension: 'grammar' as const, score: correct ? 1 : positional * 0.6 })),
       };
     }
@@ -201,6 +204,7 @@ export function grade(ex: Exercise, answer: Answer): GradeResult {
         correct: score >= 0.6,
         score,
         solution: ex.kind === 'stroke_writing' ? ex.char : '',
+        explain: ex.kind === 'stroke_writing' ? `${ex.word} (${ex.pinyin}) = ${ex.meaning}` : undefined,
         observations: ids.map((itemId) => ({ itemId, dimension: ex.kind === 'match_pairs' ? ('vocab' as const) : ('writing' as const), score })),
       };
     }

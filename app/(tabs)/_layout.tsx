@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
 
 const icon = (emoji: string) =>
@@ -9,6 +10,9 @@ const icon = (emoji: string) =>
 
 export default function TabsLayout() {
   const { c, type } = useTheme();
+  // La app dibuja bajo la barra de navegación del sistema (edge-to-edge): la barra de
+  // pestañas suma ese hueco para que los botones no queden tapados por atrás/inicio.
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
@@ -16,7 +20,14 @@ export default function TabsLayout() {
         tabBarActiveTintColor: c.primary,
         tabBarInactiveTintColor: c.textSecondary,
         tabBarLabelStyle: { fontFamily: type.caption.fontFamily, fontSize: 11 },
-        tabBarStyle: { backgroundColor: c.surface, borderTopColor: c.border, borderTopWidth: 2, height: 72, paddingTop: 6 },
+        tabBarStyle: {
+          backgroundColor: c.surface,
+          borderTopColor: c.border,
+          borderTopWidth: 2,
+          height: 66 + insets.bottom,
+          paddingTop: 6,
+          paddingBottom: Math.max(insets.bottom, 8),
+        },
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Aprender', tabBarIcon: icon('🏠') }} />
