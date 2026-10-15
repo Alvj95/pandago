@@ -31,7 +31,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Aprender', tabBarIcon: icon('🏠') }} />
-      <Tabs.Screen name="practice" options={{ title: 'Hablar', tabBarIcon: icon('💬') }} />
+      <Tabs.Screen name="practice" options={{ title: 'Practicar', tabBarIcon: icon('🎯') }} />
       <Tabs.Screen name="sing" options={{ title: 'Cantar', tabBarIcon: icon('🎤') }} />
       <Tabs.Screen name="leagues" options={{ title: 'Ligas', tabBarIcon: icon('🏮') }} />
       <Tabs.Screen name="profile" options={{ title: 'Perfil', tabBarIcon: icon('🐼') }} />

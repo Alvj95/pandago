@@ -7,9 +7,11 @@ import { ALL_SCENARIOS } from '@/features/chat/scenarios';
 import { dueItems } from '@/features/learning/adaptive/srs';
 import { useLearnerStore } from '@/store/useLearnerStore';
 import { MAX_HEARTS, useProgressStore } from '@/store/useProgressStore';
+import { useWordsStore } from '@/store/useWordsStore';
+import { isDue } from '@/features/dictionary/cards';
 import { useTheme } from '@/theme';
 
-/** Pestaña "Hablar": todas las conversaciones con IA + repaso inteligente. Aquí nunca se gastan vidas. */
+/** Pestaña «Practicar»: repaso, retos, historias, tonos, diccionario y conversaciones con IA. Aquí nunca se gastan vidas. */
 export function PracticeScreen() {
   const { c, type, spacing, radius } = useTheme();
   const router = useRouter();
@@ -17,11 +19,14 @@ export function PracticeScreen() {
   const due = dueItems(model).length;
   const hearts = useProgressStore((s) => s.hearts);
   const left = useProgressStore((s) => s.challengeHeartsLeft());
+  const cards = useWordsStore((s) => s.cards);
+  const saved = Object.keys(cards).length;
+  const savedDue = Object.values(cards).filter((card) => isDue(card, Date.now())).length;
 
   return (
     <SafeAreaView edges={['top']} style={[styles.flex, { backgroundColor: c.background }]}>
       <ScrollView contentContainerStyle={{ padding: spacing.md, gap: spacing.md, paddingBottom: spacing.xxl }}>
-        <Text style={[type.display, { color: c.textPrimary }]}>Hablar</Text>
+        <Text style={[type.display, { color: c.textPrimary }]}>Practicar</Text>
         <BaoBubble mood="talking" message="Aquí practicamos sin miedo: equivocarte no cuesta vidas. ¡Habla todo lo que puedas!" hanzi="我们聊天吧！" pinyin="wǒmen liáotiān ba" />
 
         <PressableScale onPress={() => router.push('/review')} accessibilityRole="button" accessibilityLabel="Repaso inteligente">
@@ -50,6 +55,21 @@ export function PracticeScreen() {
                 </Text>
               </View>
               <Text style={[type.title, styles.onBrand]}>›</Text>
+            </View>
+          </Card>
+        </PressableScale>
+
+        <PressableScale onPress={() => router.push('/dictionary')} accessibilityRole="button" accessibilityLabel="Diccionario y Mis palabras">
+          <Card index={2}>
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <Text style={styles.icon}>📕</Text>
+              <View style={styles.flex}>
+                <Text style={[type.title, { color: c.textPrimary }]}>Diccionario y Mis palabras</Text>
+                <Text style={[type.body, { color: c.textSecondary }]}>
+                  {saved ? `${saved} palabras guardadas${savedDue ? ` · ${savedDue} para repasar` : ''}` : 'Busca en español, pinyin o caracteres y guarda con ⭐'}
+                </Text>
+              </View>
+              <Text style={[type.title, { color: c.textSecondary }]}>›</Text>
             </View>
           </Card>
         </PressableScale>

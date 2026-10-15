@@ -4,6 +4,7 @@ import { VOCAB } from '@/data/hsk/course';
 import type { VocabItem } from '@/data/hsk/types';
 import { speakChinese } from '@/lib/speech';
 import { useTheme } from '@/theme';
+import { StarButton } from './StarButton';
 import { ExampleRow, HanziTones, PinyinText } from './ToneText';
 
 const SINGLE = new Map(VOCAB.filter((v) => [...v.hanzi].length === 1).map((v) => [v.hanzi, v]));
@@ -31,6 +32,7 @@ export function WordCard({ word }: { word: VocabItem }) {
           <Text style={[type.title, { color: c.textPrimary }]}>{word.meaning}</Text>
           <Text style={[type.caption, { color: c.textSecondary }]}>HSK {word.level} · tonos {word.tones.map((t) => (t === 5 ? '·' : t)).join(' ')}</Text>
         </View>
+        <StarButton id={word.id} size={28} />
       </View>
 
       {parts.some((p) => p.v) && (

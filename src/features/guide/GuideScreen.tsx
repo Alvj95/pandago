@@ -1,7 +1,7 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { GrammarNoteCard, HanziTones, PinyinText } from '@/components/learn';
+import { GrammarNoteCard, HanziTones, PinyinText, StarButton } from '@/components/learn';
 import { Bao } from '@/components/mascot';
 import { Button3D, PressableScale } from '@/components/ui';
 import { VOCAB } from '@/data/hsk/course';
@@ -68,6 +68,7 @@ export function GuideScreen({ unit }: { unit: Unit }) {
                 </Text>
               )}
             </View>
+            <StarButton id={w.id} />
           </PressableScale>
         ))}
 
