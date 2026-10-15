@@ -121,13 +121,42 @@ export function createWorkersAiTutor(ai: AiBinding, models: string[], asrModel: 
     name: `workers-ai:${models[0] ?? '?'}`,
     turn: (req) => withLevelGuard(call, req),
     assess: async (audio, expected) => {
-      const out = (await ai.run(asrModel, { audio: [...new Uint8Array(audio)] })) as { text?: string };
-      return alignTranscript(str(out?.text), expected);
+      if (audio.byteLength < 2000) throw new Error('audio vacío o demasiado corto');
+      // Se prueban los reconocedores en orden: el primero que devuelva texto gana.
+      let lastError: unknown = null;
+      for (const model of asrModel.split(',').map((m) => m.trim()).filter(Boolean)) {
+        try {
+          const out = (await ai.run(model, asrInput(model, audio))) as { text?: string };
+          return alignTranscript(str(out?.text), expected);
+        } catch (err) {
+          lastError = err;
+        }
+      }
+      throw lastError instanceof Error ? lastError : new Error('asr: sin respuesta');
     },
   };
 }
 
 // ---------------------------------------------------------------- Pronunciación (aproximada)
+
+function toBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+/**
+ * Cada reconocedor de Workers AI espera el audio de una forma: whisper-large-v3-turbo
+ * en base64 (y admite idioma y una frase guía que le hace escribir en chino
+ * simplificado); el whisper clásico, como lista de bytes.
+ */
+export function asrInput(model: string, audio: ArrayBuffer): Record<string, unknown> {
+  if (model.includes('large-v3-turbo')) {
+    return { audio: toBase64(audio), language: 'zh', initial_prompt: '以下是普通话的句子，使用简体中文。' };
+  }
+  return { audio: [...new Uint8Array(audio)] };
+}
 
 const HAN = /\p{Script=Han}/u;
 

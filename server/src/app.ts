@@ -49,12 +49,13 @@ export function createApp<E extends object>(getTutor: (env: E) => Tutor) {
     try {
       const form = await c.req.formData();
       const audio = form.get('audio');
+      // En la charla libre no hay frase esperada: solo se transcribe.
       const expected = form.get('expected');
-      if (!audio || typeof audio === 'string' || typeof expected !== 'string') return c.json({ error: 'bad_request' }, 400);
-      return c.json(await tutor.assess(await audio.arrayBuffer(), expected));
+      if (!audio || typeof audio === 'string') return c.json({ error: 'bad_request', detail: 'falta el audio' }, 400);
+      return c.json(await tutor.assess(await audio.arrayBuffer(), typeof expected === 'string' ? expected : ''));
     } catch (err) {
       console.error(err);
-      return c.json({ error: 'speech_unavailable' }, 502);
+      return c.json({ error: 'speech_unavailable', detail: String(err).slice(0, 300) }, 502);
     }
   });
 

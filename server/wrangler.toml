@@ -13,4 +13,4 @@ binding = "AI"
 # Primero Qwen3 (barato y bueno en chino); si falla, Llama 3.3 70B (admite JSON mode).
 # Si Cloudflare cambia el catálogo, edita esta lista (dash.cloudflare.com → Workers AI → Models).
 TUTOR_MODELS = "@cf/qwen/qwen3-30b-a3b-fp8,@cf/meta/llama-3.3-70b-instruct-fp8-fast"
-ASR_MODEL = "@cf/openai/whisper"
+ASR_MODEL = "@cf/openai/whisper-large-v3-turbo,@cf/openai/whisper"

@@ -58,6 +58,22 @@ describe('tutor gratis (Workers AI)', () => {
     assert.equal((await createWorkersAiTutor(ai, ['m'], 'asr').turn(req)).bao_mood, 'happy');
   });
 
+  it('voz: prueba el siguiente reconocedor si el primero falla y rechaza audios vacíos', async () => {
+    const calls: string[] = [];
+    const ai = {
+      run: async (model: string, input: Record<string, unknown>) => {
+        calls.push(`${model}:${typeof input.audio}`);
+        if (model === 'turbo-large-v3-turbo') throw new Error('formato no admitido');
+        return { text: '你好' };
+      },
+    };
+    const tutor = createWorkersAiTutor(ai, ['m'], 'turbo-large-v3-turbo, clasico');
+    const r = await tutor.assess!(new ArrayBuffer(5000), '你好');
+    assert.deepEqual(calls, ['turbo-large-v3-turbo:string', 'clasico:object']);
+    assert.equal(r.transcript, '你好');
+    await assert.rejects(tutor.assess!(new ArrayBuffer(10), '你好'));
+  });
+
   it('alinea la transcripción con la frase y aplica el cambio de tono', () => {
     const r = alignTranscript('你好吗', '你好！');
     assert.deepEqual(r.syllables.map((s) => s.tone), [2, 3]); // 你好 se dice 2+3

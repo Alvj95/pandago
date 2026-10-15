@@ -73,6 +73,22 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           test "$CODE" = "200"
+      # Voz china sintética grabada como m4a (AAC), igual que el micrófono de Android.
+      - name: Probar el reconocimiento de voz
+        if: env.HAS_CF == 'true'
+        continue-on-error: true
+        run: |
+          sudo apt-get install -y -qq espeak-ng ffmpeg > /dev/null
+          espeak-ng -v cmn -s 120 -w take.wav "你好，我叫宝宝。"
+          ffmpeg -loglevel error -y -i take.wav -ar 44100 -ac 1 -c:a aac -b:a 128k take.m4a
+          for EXPECTED in "你好，我叫宝宝。" ""; do
+            RES=$(curl -s -w '\n%{http_code}' -X POST "$URL/v1/speech/assess" -F "audio=@take.m4a;type=audio/m4a" -F "expected=$EXPECTED")
+            CODE=$(echo "$RES" | tail -1)
+            BODY=$(echo "$RES" | sed '$d')
+            echo "esperado='$EXPECTED' → HTTP $CODE $BODY"
+            { echo ""; echo "### Voz (esperado: '$EXPECTED') → HTTP $CODE"; echo '```json'; echo "$BODY"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            test "$CODE" = "200"
+          done
       - name: Falta configurar Cloudflare
         if: env.HAS_CF != 'true'
         run: echo "Añade los secretos CLOUDFLARE_API_TOKEN y CLOUDFLARE_ACCOUNT_ID para publicar el tutor." >> "$GITHUB_STEP_SUMMARY"
