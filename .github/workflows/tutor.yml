@@ -121,7 +121,7 @@ jobs:
         if: env.HAS_CF == 'true'
         continue-on-error: true
         run: |
-          for MSG in "hola, ¿cómo estás?" "我是很累" "¿qué significa 一下?"; do
+          for MSG in "¿qué haces?" "我是喜欢苹果" "¿cómo se dice perro?" "tengo 30 años y vivo en Madrid"; do
             BODY=$(jq -nc --arg t "$MSG" '{messages:[{role:"bao",text:"你好！"},{role:"user",text:$t}],hsk_level:1,memory:[]}')
             RES=$(curl -s -w '\n%{http_code}' -X POST "$URL/v1/chat/free" -H 'content-type: application/json' --data "$BODY")
             CODE=$(echo "$RES" | tail -1)
