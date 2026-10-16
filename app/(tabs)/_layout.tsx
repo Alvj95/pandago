@@ -30,12 +30,13 @@ export default function TabsLayout() {
         },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Aprender', tabBarIcon: icon('🏠') }} />
+      <Tabs.Screen name="index" options={{ title: 'Bao', tabBarIcon: icon('🐼') }} />
+      <Tabs.Screen name="path" options={{ title: 'Camino', tabBarIcon: icon('🗺️') }} />
       <Tabs.Screen name="practice" options={{ title: 'Practicar', tabBarIcon: icon('🎯') }} />
-      <Tabs.Screen name="house" options={{ title: 'Casa', tabBarIcon: icon('🏡') }} />
-      <Tabs.Screen name="sing" options={{ title: 'Cantar', tabBarIcon: icon('🎤') }} />
-      <Tabs.Screen name="leagues" options={{ title: 'Ligas', tabBarIcon: icon('🏮') }} />
-      <Tabs.Screen name="profile" options={{ title: 'Perfil', tabBarIcon: icon('🐼') }} />
+      <Tabs.Screen name="profile" options={{ title: 'Perfil', tabBarIcon: icon('👤') }} />
+      {/* Siguen existiendo, pero se abren desde Practicar (Cantar) y Perfil (Ligas). */}
+      <Tabs.Screen name="sing" options={{ href: null, title: 'Cantar' }} />
+      <Tabs.Screen name="leagues" options={{ href: null, title: 'Ligas' }} />
     </Tabs>
   );
 }

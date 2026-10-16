@@ -7,6 +7,13 @@ import { Button3D, Card, PressableScale } from '@/components/ui';
 import { feedback } from '@/lib/haptics';
 import { speakChinese } from '@/lib/speech';
 import { usePetStore } from '@/store/usePetStore';
+import { UNITS } from '@/data/hsk/course';
+import { dueItems } from '@/features/learning/adaptive/srs';
+import { baoLines } from '@/features/home/baoLines';
+import { TopStatusBar } from '@/features/home/components/TopStatusBar';
+import { currentNode, useOpenNode } from '@/features/home/useOpenNode';
+import { useLearnerStore } from '@/store/useLearnerStore';
+import { MAX_HEARTS, useProgressStore } from '@/store/useProgressStore';
 import { useTheme } from '@/theme';
 import {
   askFor,
@@ -50,6 +57,15 @@ export function HouseScreen() {
   const [mood, setMood] = useState<Mood>('idle');
   const [line, setLine] = useState<Line | null>(null);
   const [showWords, setShowWords] = useState(false);
+  const [care, setCare] = useState(false);
+  const completed = useProgressStore((st) => st.completedNodeIds);
+  const progress = useProgressStore();
+  const learner = useLearnerStore((st) => st.model);
+  const dueCount = useMemo(() => dueItems(learner, Date.now()).length, [learner]);
+  const next = currentNode(completed);
+  const openNode = useOpenNode();
+  const needy = (Object.values(pet.needs) as number[]).some((v) => v < 45);
+  const tapIndex = useRef(0);
   const actionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Comer
   const [feed, setFeed] = useState<{ options: (typeof FOODS)[number][]; target: (typeof FOODS)[number]; wrong: string[]; done?: boolean } | null>(null);
@@ -101,6 +117,30 @@ export function HouseScreen() {
     };
   }, [play]);
 
+  /** Al tocar a Bao dice otra cosa: saludo, racha, meta, repasos, curiosidades… */
+  const tapBao = () => {
+    const now = new Date();
+    const skills = new Set(UNITS.flatMap((u) => u.nodes).filter((n) => completed.includes(n.id)).flatMap((n) => n.skillIds));
+    const lines = baoLines({
+      hour: now.getHours(),
+      day: Math.floor(now.getTime() / 86_400_000),
+      streakDays: progress.streakDays,
+      xpToday: progress.lastActiveDay === now.toLocaleDateString('sv-SE') ? progress.xpToday : 0,
+      dailyGoalXp: progress.dailyGoalXp,
+      dueCount,
+      pendingChests: progress.pendingChests,
+      hearts: progress.hearts,
+      maxHearts: MAX_HEARTS,
+      wordsPracticed: skills.size,
+    });
+    const l = lines[tapIndex.current++ % lines.length]!;
+    void feedback.tap();
+    setLine({ hanzi: l.hanzi ?? '😊', pinyin: l.pinyin ?? '', es: l.message });
+    setMood(l.mood);
+    play(l.mood === 'happy' ? 'hop' : 'wave', 1800);
+    if (l.hanzi) speakChinese(l.hanzi.replace(/[！!]/g, ''), { force: true });
+  };
+
   const backHome = () => {
     setMode('home');
     const l = moodLine(usePetStore.getState().pet, new Date().getHours());
@@ -114,13 +154,8 @@ export function HouseScreen() {
 
   return (
     <SafeAreaView edges={['top']} style={[styles.flex, { backgroundColor: c.background }]}>
+      <TopStatusBar />
       <ScrollView contentContainerStyle={{ padding: spacing.md, gap: spacing.md, paddingBottom: spacing.xxl }}>
-        <View style={[styles.row, { justifyContent: 'space-between' }]}>
-          <Text style={[type.display, { color: c.textPrimary }]}>🏠 Casa de Bao</Text>
-          <Text style={[type.title, { color: c.textSecondary }]} accessibilityLabel={`Despensa: ${pet.food} comidas`}>
-            🥟 {pet.food}
-          </Text>
-        </View>
 
         {/* Habitación */}
         <View style={[styles.room, { borderRadius: radius.lg, backgroundColor: floor }]}>
@@ -130,6 +165,9 @@ export function HouseScreen() {
           </View>
           {mode !== 'bath' ? <Text style={styles.plant}>🎋</Text> : <Text style={[styles.plant, { fontSize: 26 }]}>🫧</Text>}
           {asleep ? <Text style={[styles.zz, { color: '#A3B4FF' }]}>Z z z</Text> : null}
+          <View style={styles.pantry} accessibilityLabel={`Despensa: ${pet.food} comidas`}>
+            <Text style={[type.caption, { color: '#5B3A22' }]}>🥟 {pet.food}</Text>
+          </View>
           {line ? (
             <PressableScale onPress={() => speakChinese(line.hanzi, { force: true })} accessibilityRole="button" accessibilityLabel={`Bao dice ${line.hanzi}. Toca para oírlo`} containerStyle={styles.sayWrap}>
               <View style={[styles.say, { borderRadius: radius.md }]}>
@@ -143,63 +181,68 @@ export function HouseScreen() {
           <View style={{ width: baoSize, height: baoSize * FULL_RATIO }}>
             {mode === 'play' && game === 'hide' && hidden ? (
               <Text style={{ fontSize: 40, textAlign: 'center', marginTop: baoSize * 0.5 }}>❓</Text>
-            ) : <BaoFull size={baoSize} action={asleep ? 'sleep' : action} mood={mood === 'sleep' ? 'idle' : mood} />}
+            ) : (
+              <PressableScale onPress={tapBao} disabled={mode !== 'home' || asleep} accessibilityRole="button" accessibilityLabel="Bao. Tócalo para que te diga otra cosa">
+                <BaoFull size={baoSize} action={asleep ? 'sleep' : action} mood={mood === 'sleep' ? 'idle' : mood} />
+              </PressableScale>
+            )}
             {mode === 'bath' && bath ? <BathSpots size={baoSize} onTap={onBathTap} done={bath.found} /> : null}
           </View>
         </View>
 
         {mode === 'home' ? (
           <>
-            <Card>
-              <View style={[styles.needs, { gap: spacing.sm }]}>
-                {NEEDS.map((n) => (
-                  <View key={n.key} style={styles.need} accessibilityLabel={`${n.label}: ${Math.round(pet.needs[n.key])} de 100`}>
-                    <Text style={[type.caption, { color: c.textPrimary }]}>
-                      {n.icon} {n.label}
-                    </Text>
-                    <View style={[styles.bar, { backgroundColor: c.surfaceSunken }]}>
-                      <View style={{ width: `${pet.needs[n.key]}%`, height: '100%', borderRadius: 99, backgroundColor: n.color }} />
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </Card>
-            <View style={[styles.row, { gap: 6 }]}>
-              <ActButton icon="🍜" label="Comer" disabled={asleep} onPress={() => startFeed()} />
-              <ActButton icon="🛁" label="Bañar" disabled={asleep} onPress={() => startBath()} />
-              <ActButton icon="🎾" label="Jugar" disabled={asleep} onPress={() => startPlay()} />
-              <ActButton icon={asleep ? '☀️' : '🌙'} label={asleep ? 'Despertar' : 'Dormir'} onPress={() => toggleSleep()} />
-              <ActButton
-                icon="💬"
-                label="Hablar"
-                disabled={asleep}
-                onPress={() => {
-                  update((p) => bump(p, { joy: 8 }));
-                  router.push({ pathname: '/chat', params: { mode: 'pet' } });
-                }}
-              />
-            </View>
-            {asleep ? <SleepReview words={pet.words} /> : null}
-            <Card>
-              <PressableScale onPress={() => setShowWords((v) => !v)} accessibilityRole="button" accessibilityLabel="Palabras de la casa">
-                <Text style={[type.title, { color: c.textPrimary }]}>
-                  📒 Palabras de la casa ({pet.words.length}) {showWords ? '▾' : '▸'}
+            <View style={[styles.row, { justifyContent: 'space-around' }]}>
+              {NEEDS.map((n) => (
+                <Text key={n.key} style={[type.caption, { color: pet.needs[n.key] < 45 ? c.danger : c.textPrimary }]} accessibilityLabel={`${n.label}: ${Math.round(pet.needs[n.key])} de 100`}>
+                  {n.icon} {Math.round(pet.needs[n.key])}%
                 </Text>
-              </PressableScale>
-              {showWords ? (
-                pet.words.length ? (
-                  [...pet.words].reverse().map((h) => {
-                    const w = houseWord(h);
-                    return w ? <WordRow key={h} w={w} /> : null;
-                  })
-                ) : (
-                  <Text style={[type.body, { color: c.textSecondary, marginTop: spacing.xs }]}>Cuida a Bao y aquí irán las palabras que aprendas.</Text>
-                )
-              ) : null}
-            </Card>
-            <Text style={[type.caption, { color: c.textSecondary, textAlign: 'center' }]}>
-              Cada lección te da 🥟 comida (2 si es perfecta). Bao nunca enferma: si lo descuidas, solo te echa de menos.
-            </Text>
+              ))}
+            </View>
+            {next ? <Button3D label={`▶ Estudiar · ${next.title}`} onPress={() => openNode(next)} /> : null}
+            <View style={[styles.row, { gap: spacing.sm }]}>
+              <Tile icon="🧠" label="Repaso" badge={dueCount || undefined} onPress={() => router.push('/review')} />
+              <Tile icon="📞" label="Llamar" onPress={() => router.push('/call')} />
+              <Tile icon={care ? '✕' : '🍜'} label={care ? 'Cerrar' : 'Cuidar'} badge={needy ? '!' : undefined} onPress={() => setCare((v) => !v)} />
+            </View>
+            {care ? (
+              <>
+                <View style={[styles.row, { gap: 6 }]}>
+                  <ActButton icon="🍜" label="Comer" disabled={asleep} onPress={() => startFeed()} />
+                  <ActButton icon="🛁" label="Bañar" disabled={asleep} onPress={() => startBath()} />
+                  <ActButton icon="🎾" label="Jugar" disabled={asleep} onPress={() => startPlay()} />
+                  <ActButton icon={asleep ? '☀️' : '🌙'} label={asleep ? 'Despertar' : 'Dormir'} onPress={() => toggleSleep()} />
+                  <ActButton
+                    icon="💬"
+                    label="Hablar"
+                    disabled={asleep}
+                    onPress={() => {
+                      update((p) => bump(p, { joy: 8 }));
+                      router.push({ pathname: '/chat', params: { mode: 'pet' } });
+                    }}
+                  />
+                </View>
+                <Card>
+                  <PressableScale onPress={() => setShowWords((v) => !v)} accessibilityRole="button" accessibilityLabel="Palabras de la casa">
+                    <Text style={[type.title, { color: c.textPrimary }]}>
+                      📒 Palabras de la casa ({pet.words.length}) {showWords ? '▾' : '▸'}
+                    </Text>
+                  </PressableScale>
+                  {showWords ? (
+                    pet.words.length ? (
+                      [...pet.words].reverse().map((h) => {
+                        const w = houseWord(h);
+                        return w ? <WordRow key={h} w={w} /> : null;
+                      })
+                    ) : (
+                      <Text style={[type.body, { color: c.textSecondary, marginTop: spacing.xs }]}>Cuida a Bao y aquí irán las palabras que aprendas.</Text>
+                    )
+                  ) : null}
+                </Card>
+                <Text style={[type.caption, { color: c.textSecondary, textAlign: 'center' }]}>Cada lección te da 🥟 comida. Bao nunca enferma: si lo descuidas, solo te echa de menos.</Text>
+              </>
+            ) : null}
+            {asleep ? <SleepReview words={pet.words} /> : null}
           </>
         ) : null}
 
@@ -459,6 +502,23 @@ export function HouseScreen() {
   }
 }
 
+function Tile({ icon, label, onPress, badge }: { icon: string; label: string; onPress: () => void; badge?: number | string }) {
+  const { c, type, radius } = useTheme();
+  return (
+    <PressableScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} containerStyle={styles.flex}>
+      <View style={[styles.tileBig, { borderRadius: radius.md, borderColor: c.border, backgroundColor: c.surface }]}>
+        <Text style={{ fontSize: 26 }}>{icon}</Text>
+        <Text style={[type.caption, { color: c.textPrimary }]}>{label}</Text>
+        {badge !== undefined ? (
+          <View style={[styles.badge, { backgroundColor: c.danger }]}>
+            <Text style={[type.caption, { color: '#fff', fontSize: 10, lineHeight: 14 }]}>{badge}</Text>
+          </View>
+        ) : null}
+      </View>
+    </PressableScale>
+  );
+}
+
 function ActButton({ icon, label, onPress, disabled }: { icon: string; label: string; onPress: () => void; disabled?: boolean }) {
   const { c, type, radius } = useTheme();
   return (
@@ -538,6 +598,9 @@ const styles = StyleSheet.create({
   need: { width: '47%', gap: 4 },
   bar: { height: 10, borderRadius: 99, overflow: 'hidden' },
   act: { alignItems: 'center', paddingVertical: 8, borderWidth: 2, borderBottomWidth: 4 },
+  tileBig: { alignItems: 'center', paddingVertical: 10, borderWidth: 2, borderBottomWidth: 4, gap: 2 },
+  badge: { position: 'absolute', top: 4, right: 8, minWidth: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  pantry: { position: 'absolute', left: 12, bottom: 10, backgroundColor: 'rgba(255,255,255,0.75)', borderRadius: 99, paddingHorizontal: 8, paddingVertical: 2 },
   tile: { alignItems: 'center', paddingVertical: 8, borderWidth: 2, borderBottomWidth: 4 },
   balloon: { width: 54, height: 66, borderRadius: 30, borderWidth: 2 },
   place: { alignItems: 'center', padding: 8, borderWidth: 2, borderBottomWidth: 4, width: 92 },
