@@ -98,7 +98,7 @@ function responseOf(out: unknown): unknown {
   return typeof r === 'string' ? extractJson(r) : r;
 }
 
-export function createWorkersAiTutor(ai: AiBinding, models: string[], asrModel: string, ttsModel = '@cf/myshell-ai/melotts'): Tutor {
+export function createWorkersAiTutor(ai: AiBinding, models: string[], asrModel: string, ttsModel = '@cf/myshell-ai/melotts', chatModels = models): Tutor {
   const call = async (req: TurnRequest, extra?: string) => {
     const messages = [
       { role: 'system', content: buildSystemPrompt(req.scenario.persona, req.learner.hsk_level, req.learner.native_language) + FORMAT },
@@ -141,7 +141,7 @@ export function createWorkersAiTutor(ai: AiBinding, models: string[], asrModel: 
       if (fallback !== null) return alignTranscript(fallback, expected);
       throw lastError instanceof Error ? lastError : new Error('asr: sin respuesta');
     },
-    chat: createFreeChat(ai, models),
+    chat: createFreeChat(ai, chatModels),
     tts: async (text) => audioOf(await ai.run(ttsModel, { prompt: text, lang: 'zh' })),
     ask: async (req) => {
       const messages = [

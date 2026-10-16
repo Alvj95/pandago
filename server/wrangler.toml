@@ -15,3 +15,5 @@ binding = "AI"
 TUTOR_MODELS = "@cf/qwen/qwen3-30b-a3b-fp8,@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 ASR_MODEL = "@cf/openai/whisper-large-v3-turbo,@cf/openai/whisper"
 TTS_MODEL = "@cf/myshell-ai/melotts"
+# Chat libre: Llama 3.3 (Meta) sigue mejor las instrucciones en español; Qwen3 de reserva.
+CHAT_MODELS = "@cf/meta/llama-3.3-70b-instruct-fp8-fast,@cf/qwen/qwen3-30b-a3b-fp8"

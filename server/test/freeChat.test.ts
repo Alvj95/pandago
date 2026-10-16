@@ -16,8 +16,9 @@ describe('chat libre con Bao', () => {
   it('el prompt es de charla, recuerda datos y respeta las correcciones', () => {
     const p = freeChatSystemPrompt({ messages: [], hsk_level: 2, memory: ['Le gusta el té'], corrections: false });
     assert.match(p, /NO pongas ejercicios/);
+    assert.match(p, /me llamo Ana/);
     assert.match(p, /Le gusta el té/);
-    assert.match(p, /"correction" siempre es null/);
+    assert.match(p, /"correction": siempre null/);
   });
 
   it('completa la respuesta y rechaza la que no trae chino', () => {
@@ -25,6 +26,8 @@ describe('chat libre con Bao', () => {
     assert.equal(r.note, null);
     assert.deepEqual(r.correction, { corrected: '我很累', explanation: 'sin 是' });
     assert.throws(() => coerceFreeChat({ hanzi: 'hola' }));
+    assert.throws(() => coerceFreeChat({ hanzi: '我累了', translation: '我累了' })); // traducción en chino
+    assert.equal(coerceFreeChat({ hanzi: '一下', translation: 'un rato', note: '表示短暂的动作。' }).note, null);
   });
 
   it('prueba otro modelo si el primero falla y la API responde', async () => {
