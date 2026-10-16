@@ -54,26 +54,39 @@ export async function assessPronunciation(audioUri: string, expectedHanzi: strin
   } else {
     form.append('audio', { uri: audioUri, name: 'take.m4a', type: 'audio/m4a' } as unknown as Blob);
   }
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 25_000);
-  let res: Response;
+  const { status, body } = await postForm(`${API_URL}/v1/speech/assess`, form, authToken, 25_000);
+  if (status < 200 || status >= 300) {
+    const err = parseJson(body) as { error?: string; detail?: string } | null;
+    throw new TutorUnavailableError(`HTTP ${status}${err?.detail ? `: ${err.detail.slice(0, 120)}` : err?.error ? `: ${err.error}` : ''}`);
+  }
+  return parseJson(body) as PronunciationResult;
+}
+
+const parseJson = (text: string): unknown => {
   try {
-    res = await fetch(`${API_URL}/v1/speech/assess`, {
-      method: 'POST',
-      headers: { authorization: `Bearer ${authToken}` },
-      body: form,
-      signal: controller.signal,
-    });
-  } catch (err) {
-    throw new TutorUnavailableError(controller.signal.aborted ? 'sin respuesta en 25 s' : `sin conexión (${String(err).slice(0, 80)})`);
-  } finally {
-    clearTimeout(timer);
+    return JSON.parse(text);
+  } catch {
+    return null;
   }
-  if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as { error?: string; detail?: string } | null;
-    throw new TutorUnavailableError(`HTTP ${res.status}${body?.detail ? `: ${body.detail.slice(0, 120)}` : body?.error ? `: ${body.error}` : ''}`);
-  }
-  return (await res.json()) as PronunciationResult;
+};
+
+/**
+ * Envía un formulario con archivo. Se usa XMLHttpRequest y no fetch: el fetch de
+ * Expo (el global en SDK 57) no admite las partes `{ uri, name, type }` de React
+ * Native y fallaba con «Unsupported FormDataPart implementation»; el
+ * XMLHttpRequest de React Native sí lee el archivo del móvil.
+ */
+function postForm(url: string, form: FormData, authToken: string, timeoutMs: number): Promise<{ status: number; body: string }> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url);
+    xhr.setRequestHeader('authorization', `Bearer ${authToken}`);
+    xhr.timeout = timeoutMs;
+    xhr.onload = () => resolve({ status: xhr.status, body: xhr.responseText ?? '' });
+    xhr.onerror = () => reject(new TutorUnavailableError('sin conexión'));
+    xhr.ontimeout = () => reject(new TutorUnavailableError(`sin respuesta en ${Math.round(timeoutMs / 1000)} s`));
+    xhr.send(form);
+  });
 }
 
 /** «Pregúntale a Bao»: duda libre sobre una frase; respuesta en español. */
