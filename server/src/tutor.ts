@@ -30,6 +30,29 @@ export interface Tutor {
   tts?: (text: string) => Promise<ArrayBuffer>;
   /** «Pregúntale a Bao»: duda libre sobre una frase, respondida en español. */
   ask?: (req: AskRequest) => Promise<{ answer: string }>;
+  /** Chat libre con Bao: charla sin guion ni tareas. */
+  chat?: (req: FreeChatRequest) => Promise<FreeChatReply>;
+}
+
+export interface FreeChatRequest {
+  /** Últimos mensajes (el último es del estudiante). */
+  messages: { role: 'user' | 'bao'; text: string }[];
+  hsk_level: number;
+  /** Lo que Bao recuerda del estudiante (nombre, gustos…). */
+  memory: string[];
+  corrections: boolean;
+}
+
+export interface FreeChatReply {
+  hanzi: string;
+  pinyin: string;
+  translation: string;
+  /** Explicación en español si el estudiante preguntó algo sobre el idioma. */
+  note: string | null;
+  /** Corrección suave del último mensaje del estudiante (si escribió chino con errores). */
+  correction: { corrected: string; explanation: string } | null;
+  /** Dato nuevo para recordar (p. ej. «Se llama Ana»). */
+  remember: string | null;
 }
 
 export interface AskRequest {

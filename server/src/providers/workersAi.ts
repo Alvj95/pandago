@@ -14,6 +14,7 @@ import { TutorTurn, type TurnRequest } from '../../../src/features/chat/engine/c
 import { buildSystemPrompt, buildUserTurn } from '../promptBuilder.ts';
 import { type AskRequest, type PronunciationResult, type Tutor, withLevelGuard } from '../tutor.ts';
 import { CHAR_PINYIN } from '../data/charPinyin.ts';
+import { createFreeChat } from './freeChat.ts';
 import { vocabForLevel } from '../vocab.ts';
 
 /** Lo mínimo que usamos del binding `env.AI` de Workers. */
@@ -140,6 +141,7 @@ export function createWorkersAiTutor(ai: AiBinding, models: string[], asrModel: 
       if (fallback !== null) return alignTranscript(fallback, expected);
       throw lastError instanceof Error ? lastError : new Error('asr: sin respuesta');
     },
+    chat: createFreeChat(ai, models),
     tts: async (text) => audioOf(await ai.run(ttsModel, { prompt: text, lang: 'zh' })),
     ask: async (req) => {
       const messages = [

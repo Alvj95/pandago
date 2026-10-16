@@ -109,3 +109,36 @@ export async function askBao(
   if (!answer) throw new TutorUnavailableError('ask: vacío');
   return answer;
 }
+
+export interface FreeChatReply {
+  hanzi: string;
+  pinyin: string;
+  translation: string;
+  note: string | null;
+  correction: { corrected: string; explanation: string } | null;
+  remember: string | null;
+}
+
+/** Chat libre con Bao: charla sin guion. */
+export async function sendFreeChat(
+  messages: { role: 'user' | 'bao'; text: string }[],
+  opts: { hskLevel: number; memory: string[]; corrections: boolean },
+): Promise<FreeChatReply> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20_000);
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/v1/chat/free`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ messages, hsk_level: opts.hskLevel, memory: opts.memory, corrections: opts.corrections }),
+      signal: controller.signal,
+    });
+  } catch {
+    throw new TutorUnavailableError(controller.signal.aborted ? 'sin respuesta' : 'sin conexión');
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!res.ok) throw new TutorUnavailableError(`chat ${res.status}`);
+  return (await res.json()) as FreeChatReply;
+}

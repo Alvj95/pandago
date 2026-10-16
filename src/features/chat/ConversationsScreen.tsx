@@ -16,7 +16,7 @@ export function ConversationsScreen() {
         <PressableScale onPress={() => exitTo(router)} accessibilityRole="button" accessibilityLabel="Volver" hitSlop={10}>
           <Text style={[type.title, { color: c.textSecondary }]}>✕</Text>
         </PressableScale>
-        <Text style={[type.title, { color: c.textPrimary }]}>💬 Chat con IA</Text>
+        <Text style={[type.title, { color: c.textPrimary }]}>🎭 Situaciones con IA</Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: spacing.md, paddingTop: 0, gap: spacing.md, paddingBottom: spacing.xxl }}>
         {ALL_SCENARIOS.map(({ scenario, icon, unitTitle }, i) => (

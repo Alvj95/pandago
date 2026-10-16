@@ -28,7 +28,7 @@ function tutorFor(env: Env): Tutor {
   const models = env.TUTOR_MODELS.split(',').map((m) => m.trim()).filter(Boolean);
   const free = createWorkersAiTutor(env.AI, models, env.ASR_MODEL, env.TTS_MODEL);
   const tutor: Tutor = env.ANTHROPIC_API_KEY
-    ? { ...createClaudeTutor(env.ANTHROPIC_API_KEY, env.CLAUDE_MODEL), assess: free.assess, tts: free.tts, ask: free.ask }
+    ? { ...createClaudeTutor(env.ANTHROPIC_API_KEY, env.CLAUDE_MODEL), assess: free.assess, tts: free.tts, ask: free.ask, chat: free.chat }
     : free;
   cached = { key, tutor };
   return tutor;

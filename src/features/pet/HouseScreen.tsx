@@ -202,6 +202,7 @@ export function HouseScreen() {
             {next ? <Button3D label={`▶ Estudiar · ${next.title}`} onPress={() => openNode(next)} /> : null}
             <View style={[styles.row, { gap: spacing.sm }]}>
               <Tile icon="🧠" label="Repaso" badge={dueCount || undefined} onPress={() => router.push('/review')} />
+              <Tile icon="💬" label="Chat" onPress={() => router.push('/free-chat')} />
               <Tile icon="📞" label="Llamar" onPress={() => router.push('/call')} />
               <Tile icon={care ? '✕' : '🍜'} label={care ? 'Cerrar' : 'Cuidar'} badge={needy ? '!' : undefined} onPress={() => setCare((v) => !v)} />
             </View>

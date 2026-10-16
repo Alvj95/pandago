@@ -117,6 +117,18 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           test "$CODE" = "200" && test "$SIZE" -gt 2000 && test "$ASK_CODE" = "200"
+      - name: Probar el chat libre
+        if: env.HAS_CF == 'true'
+        continue-on-error: true
+        run: |
+          for MSG in "hola, ¿cómo estás?" "我是很累" "¿qué significa 一下?"; do
+            BODY=$(jq -nc --arg t "$MSG" '{messages:[{role:"bao",text:"你好！"},{role:"user",text:$t}],hsk_level:1,memory:[]}')
+            RES=$(curl -s -w '\n%{http_code}' -X POST "$URL/v1/chat/free" -H 'content-type: application/json' --data "$BODY")
+            CODE=$(echo "$RES" | tail -1)
+            echo "«$MSG» → HTTP $CODE $(echo "$RES" | sed '$d')"
+            { echo ""; echo "### Chat libre: «$MSG» → HTTP $CODE"; echo '```json'; echo "$RES" | sed '$d'; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            test "$CODE" = "200"
+          done
       - name: Falta configurar Cloudflare
         if: env.HAS_CF != 'true'
         run: echo "Añade los secretos CLOUDFLARE_API_TOKEN y CLOUDFLARE_ACCOUNT_ID para publicar el tutor." >> "$GITHUB_STEP_SUMMARY"
