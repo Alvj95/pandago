@@ -14,6 +14,7 @@ import { TutorTurn, type TurnRequest } from '../../../src/features/chat/engine/c
 import { buildSystemPrompt, buildUserTurn } from '../promptBuilder.ts';
 import { type AskRequest, type PronunciationResult, type Tutor, withLevelGuard } from '../tutor.ts';
 import { CHAR_PINYIN } from '../data/charPinyin.ts';
+import { createAssist } from './assist.ts';
 import { createFreeChat } from './freeChat.ts';
 import { vocabForLevel } from '../vocab.ts';
 
@@ -98,7 +99,14 @@ function responseOf(out: unknown): unknown {
   return typeof r === 'string' ? extractJson(r) : r;
 }
 
-export function createWorkersAiTutor(ai: AiBinding, models: string[], asrModel: string, ttsModel = '@cf/myshell-ai/melotts', chatModels = models): Tutor {
+export function createWorkersAiTutor(
+  ai: AiBinding,
+  models: string[],
+  asrModel: string,
+  ttsModel = '@cf/myshell-ai/melotts',
+  chatModels = models,
+  visionModels = ['@cf/google/gemma-3-12b-it', '@cf/meta/llama-3.2-11b-vision-instruct'],
+): Tutor {
   const call = async (req: TurnRequest, extra?: string) => {
     const messages = [
       { role: 'system', content: buildSystemPrompt(req.scenario.persona, req.learner.hsk_level, req.learner.native_language) + FORMAT },
@@ -142,6 +150,7 @@ export function createWorkersAiTutor(ai: AiBinding, models: string[], asrModel: 
       throw lastError instanceof Error ? lastError : new Error('asr: sin respuesta');
     },
     chat: createFreeChat(ai, chatModels),
+    assist: createAssist(ai, chatModels, visionModels),
     tts: async (text) => audioOf(await ai.run(ttsModel, { prompt: text, lang: 'zh' })),
     ask: async (req) => {
       const messages = [

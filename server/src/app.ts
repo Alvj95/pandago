@@ -1,11 +1,12 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { TurnRequest } from '../../src/features/chat/engine/contract.ts';
+import { sanitizeAssist } from './providers/assist.ts';
 import { sanitizeFreeChat } from './providers/freeChat.ts';
 import { type AskRequest, type Tutor, TutorRefusedError } from './tutor.ts';
 
 /** Peticiones por IP y hora: protegen la cuota gratuita de usos abusivos. */
-const LIMITS = { turn: 120, ask: 60, tts: 400, chat: 200 } as const;
+const LIMITS = { turn: 120, ask: 60, tts: 400, chat: 200, assist: 120 } as const;
 const usage = new Map<string, { hour: number; count: number }>();
 
 function overLimit(kind: keyof typeof LIMITS, ip: string, now = Date.now()) {
@@ -117,6 +118,20 @@ export function createApp<E extends object>(getTutor: (env: E) => Tutor) {
     if (!req) return c.json({ error: 'bad_request', detail: 'faltan mensajes (el último debe ser del estudiante)' }, 400);
     try {
       return c.json(await tutor.chat(req));
+    } catch (err) {
+      console.error(err);
+      return c.json({ error: 'tutor_unavailable', detail: String(err).slice(0, 300) }, 502);
+    }
+  });
+
+  app.post('/v1/assist', async (c) => {
+    if (overLimit('assist', ipOf((n) => c.req.header(n)))) return c.json({ error: 'rate_limited' }, 429);
+    const tutor = getTutor(c.env);
+    if (!tutor.assist) return c.json({ error: 'not_supported' }, 501);
+    const req = sanitizeAssist(await c.req.json().catch(() => null));
+    if (!req) return c.json({ error: 'bad_request', detail: 'falta la pregunta, el texto o la foto' }, 400);
+    try {
+      return c.json(await tutor.assist(req));
     } catch (err) {
       console.error(err);
       return c.json({ error: 'tutor_unavailable', detail: String(err).slice(0, 300) }, 502);

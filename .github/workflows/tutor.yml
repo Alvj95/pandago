@@ -129,6 +129,28 @@ jobs:
             { echo ""; echo "### Chat libre: «$MSG» → HTTP $CODE"; echo '```json'; echo "$RES" | sed '$d'; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
             test "$CODE" = "200"
           done
+      - name: Probar Bao Asistente (texto y foto)
+        if: env.HAS_CF == 'true'
+        continue-on-error: true
+        run: |
+          ask() {
+            RES=$(curl -s -w '\n%{http_code}' -X POST "$URL/v1/assist" -H 'content-type: application/json' --data @"$1")
+            CODE=$(echo "$RES" | tail -1)
+            echo "$2 → HTTP $CODE $(echo "$RES" | sed '$d' | head -c 900)"
+            { echo ""; echo "### Asistente: $2 → HTTP $CODE"; echo '```json'; echo "$RES" | sed '$d' | head -c 1500; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            test "$CODE" = "200"
+          }
+          jq -nc '{text:"你周末有空吗？我们去喝茶吧！",question:"¿Cómo le digo que sí, que el sábado?",hsk_level:1}' > a1.json
+          ask a1.json "responder a un mensaje"
+          jq -nc '{question:"¿Cómo se dice «¿dónde está el baño?»",hsk_level:1}' > a2.json
+          ask a2.json "cómo se dice"
+          # Foto de un menú con texto chino, generada aquí mismo.
+          sudo apt-get install -y -qq fonts-noto-cjk imagemagick > /dev/null
+          FONT=$(fc-list :lang=zh family | grep -m1 -o 'Noto Sans CJK SC' || true)
+          convert -size 640x320 xc:'#FFF4DD' -font "${FONT:-Noto-Sans-CJK-SC}" -fill '#3A2010' -pointsize 46 \
+            -annotate +40+80 '菜单' -annotate +40+160 '宫保鸡丁  ¥38' -annotate +40+240 '饺子  ¥22' menu.jpg
+          jq -nc --arg img "$(base64 -w0 menu.jpg)" '{image:$img,question:"¿Qué pone en este menú?",hsk_level:1}' > a3.json
+          ask a3.json "foto de un menú"
       - name: Falta configurar Cloudflare
         if: env.HAS_CF != 'true'
         run: echo "Añade los secretos CLOUDFLARE_API_TOKEN y CLOUDFLARE_ACCOUNT_ID para publicar el tutor." >> "$GITHUB_STEP_SUMMARY"

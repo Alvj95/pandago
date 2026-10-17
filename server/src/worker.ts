@@ -18,6 +18,8 @@ export interface Env {
   TTS_MODEL?: string;
   /** Modelos del chat libre (por defecto, los del tutor). */
   CHAT_MODELS?: string;
+  /** Modelos que leen fotos (Bao Asistente). */
+  VISION_MODELS?: string;
   ANTHROPIC_API_KEY?: string;
   CLAUDE_MODEL?: string;
 }
@@ -25,12 +27,14 @@ export interface Env {
 let cached: { key: string; tutor: Tutor } | null = null;
 
 function tutorFor(env: Env): Tutor {
-  const key = `${env.ANTHROPIC_API_KEY ? 'claude' : 'ai'}|${env.TUTOR_MODELS}|${env.CHAT_MODELS ?? ''}|${env.CLAUDE_MODEL ?? ''}`;
+  const key = `${env.ANTHROPIC_API_KEY ? 'claude' : 'ai'}|${env.TUTOR_MODELS}|${env.CHAT_MODELS ?? ''}|${env.VISION_MODELS ?? ''}|${env.CLAUDE_MODEL ?? ''}`;
   if (cached?.key === key) return cached.tutor;
   const models = env.TUTOR_MODELS.split(',').map((m) => m.trim()).filter(Boolean);
-  const free = createWorkersAiTutor(env.AI, models, env.ASR_MODEL, env.TTS_MODEL, env.CHAT_MODELS ? env.CHAT_MODELS.split(',').map((m) => m.trim()).filter(Boolean) : models);
+  const free = createWorkersAiTutor(env.AI, models, env.ASR_MODEL, env.TTS_MODEL, env.CHAT_MODELS ? env.CHAT_MODELS.split(',').map((m) => m.trim()).filter(Boolean) : models,
+    env.VISION_MODELS ? env.VISION_MODELS.split(',').map((m) => m.trim()).filter(Boolean) : undefined,
+  );
   const tutor: Tutor = env.ANTHROPIC_API_KEY
-    ? { ...createClaudeTutor(env.ANTHROPIC_API_KEY, env.CLAUDE_MODEL), assess: free.assess, tts: free.tts, ask: free.ask, chat: free.chat }
+    ? { ...createClaudeTutor(env.ANTHROPIC_API_KEY, env.CLAUDE_MODEL), assess: free.assess, tts: free.tts, ask: free.ask, chat: free.chat, assist: free.assist }
     : free;
   cached = { key, tutor };
   return tutor;

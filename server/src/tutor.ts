@@ -4,6 +4,7 @@
  */
 import type { TurnRequest, TutorTurn } from '../../src/features/chat/engine/contract.ts';
 import { MAX_OUT_OF_LEVEL, outOfLevelRatio } from './levelGuard.ts';
+import type { AssistReply, AssistRequest } from './providers/assist.ts';
 
 export interface PronunciationResult {
   transcript: string;
@@ -32,6 +33,8 @@ export interface Tutor {
   ask?: (req: AskRequest) => Promise<{ answer: string }>;
   /** Chat libre con Bao: charla sin guion ni tareas. */
   chat?: (req: FreeChatRequest) => Promise<FreeChatReply>;
+  /** Bao Asistente: traducir, explicar textos o fotos, revisar mensajes. */
+  assist?: (req: AssistRequest) => Promise<AssistReply>;
 }
 
 export interface FreeChatRequest {
