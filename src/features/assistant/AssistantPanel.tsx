@@ -7,7 +7,7 @@ import { StarButton } from '@/components/learn/StarButton';
 import { Bao } from '@/components/mascot';
 import { PressableScale } from '@/components/ui';
 import { VOCAB } from '@/data/hsk/course';
-import { hasServer } from '@/lib/api';
+import { checkServer, hasServer } from '@/lib/api';
 import { feedback } from '@/lib/haptics';
 import { speakChinese, stopSpeaking } from '@/lib/speech';
 import { useProgressStore } from '@/store/useProgressStore';
@@ -78,8 +78,18 @@ export function AssistantPanel({ start, onClose, onOpenChat }: { start: Assistan
       setItems((list) => list.map((x) => (x.id === id ? { ...x, reply } : x)));
       void feedback.tap();
       if (reply.hanzi) speakChinese(reply.hanzi);
-    } catch {
-      setItems((list) => list.map((x) => (x.id === id ? { ...x, error: '📵 Bao no puede contestar ahora (sin conexión o se acabó la cuota del día).' } : x)));
+    } catch (err) {
+      // Motivo exacto + comprobación de la conexión con el servidor, para saber qué falla.
+      const why = err instanceof Error ? err.message : String(err);
+      setItems((list) => list.map((x) => (x.id === id ? { ...x, error: `📵 Bao no ha podido contestar (${why}). Comprobando la conexión…` } : x)));
+      const check = await checkServer();
+      setItems((list) =>
+        list.map((x) =>
+          x.id === id
+            ? { ...x, error: `📵 Bao no ha podido contestar (${why}). Comprobación: ${check.detail}.${check.ok ? '' : ' Prueba con otra red (wifi ↔ datos).'} Toca aquí para reintentar.` }
+            : x,
+        ),
+      );
     } finally {
       setBusy(false);
     }
@@ -176,7 +186,21 @@ export function AssistantPanel({ start, onClose, onOpenChat }: { start: Assistan
                       {x.question ? <Text style={[type.body, { color: '#fff' }]}>{x.question}</Text> : null}
                     </View>
                   ) : null}
-                  {x.reply ? <ReplyCard reply={x.reply} /> : x.error ? <Text style={[type.caption, { color: c.textSecondary }]}>{x.error}</Text> : <ActivityIndicator color={c.primary} />}
+                  {x.reply ? (
+                    <ReplyCard reply={x.reply} />
+                  ) : x.error ? (
+                    <Text
+                      onPress={() => {
+                        setItems((list) => list.filter((y) => y.id !== x.id));
+                        void ask(x.question, { context: x.context ?? null });
+                      }}
+                      style={[type.caption, { color: c.textSecondary }]}
+                    >
+                      {x.error}
+                    </Text>
+                  ) : (
+                    <ActivityIndicator color={c.primary} />
+                  )}
                 </View>
               ))}
             </ScrollView>

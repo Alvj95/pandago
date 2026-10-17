@@ -6,7 +6,7 @@ import { StarButton } from '@/components/learn/StarButton';
 import { Bao } from '@/components/mascot';
 import { Button3D, PressableScale } from '@/components/ui';
 import { VOCAB } from '@/data/hsk/course';
-import { hasServer } from '@/lib/api';
+import { checkServer, hasServer } from '@/lib/api';
 import { feedback } from '@/lib/haptics';
 import { exitTo } from '@/lib/navigation';
 import { speakChinese, stopSpeaking } from '@/lib/speech';
@@ -76,8 +76,10 @@ export function FreeChatScreen() {
       chat.add({ id: msgId(), from: 'bao', hanzi: r.hanzi, pinyin: r.pinyin, translation: r.translation, note: r.note });
       void feedback.tap();
       if (useSettingsStore.getState().voice) speakChinese(r.hanzi);
-    } catch {
-      chat.add({ id: msgId(), from: 'system', text: `📵 Bao no puede contestar ahora (sin conexión o se acabó la cuota del día). Toca aquí para reintentar.|${msg}` });
+    } catch (err) {
+      const why = err instanceof Error ? err.message : String(err);
+      const check = await checkServer();
+      chat.add({ id: msgId(), from: 'system', text: `📵 Bao no ha podido contestar (${why}). Comprobación: ${check.detail}. Toca aquí para reintentar.|${msg}` });
     } finally {
       setTyping(false);
     }

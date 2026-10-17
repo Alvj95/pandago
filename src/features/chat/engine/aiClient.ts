@@ -135,12 +135,15 @@ export async function sendFreeChat(
       body: JSON.stringify({ messages, hsk_level: opts.hskLevel, memory: opts.memory, corrections: opts.corrections }),
       signal: controller.signal,
     });
-  } catch {
-    throw new TutorUnavailableError(controller.signal.aborted ? 'sin respuesta' : 'sin conexión');
+  } catch (err) {
+    throw new TutorUnavailableError(controller.signal.aborted ? 'sin respuesta en 20 s' : `sin conexión: ${String(err).slice(0, 100)}`);
   } finally {
     clearTimeout(timer);
   }
-  if (!res.ok) throw new TutorUnavailableError(`chat ${res.status}`);
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: string; detail?: string } | null;
+    throw new TutorUnavailableError(`HTTP ${res.status}${body?.detail ? `: ${body.detail.slice(0, 160)}` : body?.error ? `: ${body.error}` : ''}`);
+  }
   return (await res.json()) as FreeChatReply;
 }
 
@@ -165,11 +168,14 @@ export async function askAssistant(req: { question: string; text?: string; image
       body: JSON.stringify({ question: req.question, text: req.text ?? '', image: req.image ?? null, hsk_level: req.hskLevel }),
       signal: controller.signal,
     });
-  } catch {
-    throw new TutorUnavailableError(controller.signal.aborted ? 'sin respuesta' : 'sin conexión');
+  } catch (err) {
+    throw new TutorUnavailableError(controller.signal.aborted ? `sin respuesta en ${req.image ? 40 : 20} s` : `sin conexión: ${String(err).slice(0, 100)}`);
   } finally {
     clearTimeout(timer);
   }
-  if (!res.ok) throw new TutorUnavailableError(`asistente ${res.status}`);
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: string; detail?: string } | null;
+    throw new TutorUnavailableError(`HTTP ${res.status}${body?.detail ? `: ${body.detail.slice(0, 160)}` : body?.error ? `: ${body.error}` : ''}`);
+  }
   return (await res.json()) as AssistReply;
 }
