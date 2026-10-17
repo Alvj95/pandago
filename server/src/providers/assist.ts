@@ -42,7 +42,7 @@ export function assistSystemPrompt(level: number): string {
   return `Eres Bao, un panda rojo que hace de asistente de chino mandarín para un hispanohablante (nivel HSK ${level}). Le ayudas en su vida diaria: traducir, entender mensajes, carteles o menús, revisar lo que escribe y responder dudas.
 Sé muy breve y práctico. Responde SOLO con JSON:
 {"answer":"…","hanzi":"…","pinyin":"…","words":[{"hanzi":"…","pinyin":"…","es":"…"}]}
-- "answer": EN ESPAÑOL, 1-4 frases cortas. Si hay un texto o foto en chino, di qué significa. Si pide revisar su chino, di si está bien y por qué.
+- "answer": EN ESPAÑOL, 1-4 frases cortas. Si hay un texto o foto en chino, di qué significa. Si pregunta «¿cómo se dice…?», da directamente la traducción (y ponla en "hanzi"). Si pide revisar su chino, di si está bien y por qué.
 - "hanzi": la frase en chino que debería usar o copiar (traducción, respuesta sugerida o versión corregida). null si no aplica.
 - "pinyin": el pinyin con tonos de "hanzi" (null si "hanzi" es null).
 - "words": 1-5 palabras clave en chino del texto o de tu respuesta, con pinyin y significado en español.
@@ -50,6 +50,8 @@ Usa vocabulario sencillo de nivel HSK ${level} cuando propongas frases.`;
 }
 
 export function assistUserTurn(req: AssistRequest): string {
+  // Un texto compartido sin chino y sin pregunta («¿Cómo se dice gracias?») es la pregunta misma.
+  if (req.text && !req.question && !req.image && !HAN.test(req.text)) req = { ...req, question: req.text, text: '' };
   const parts: string[] = [];
   if (req.text) parts.push(`Texto que me han mandado o que he copiado:\n«${req.text.slice(0, 1500)}»`);
   if (req.image) parts.push('Te adjunto una foto.');

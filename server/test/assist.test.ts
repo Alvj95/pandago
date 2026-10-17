@@ -11,6 +11,9 @@ describe('Bao Asistente', () => {
     assert.equal(r.image, 'A'.repeat(200));
     assert.match(assistUserTurn(r), /你周末有空吗/);
     assert.match(assistUserTurn(r), /Explícame/);
+    const es = assistUserTurn({ question: '', text: '¿Cómo se dice gracias?', image: null, hsk_level: 1 });
+    assert.match(es, /Mi pregunta: ¿Cómo se dice gracias\?/);
+    assert.doesNotMatch(es, /Texto que me han mandado/);
   });
 
   it('limpia la respuesta: palabras en chino con significado, frase solo si es china', () => {

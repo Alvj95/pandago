@@ -144,6 +144,9 @@ jobs:
           ask a1.json "responder a un mensaje"
           jq -nc '{question:"¿Cómo se dice «¿dónde está el baño?»",hsk_level:1}' > a2.json
           ask a2.json "cómo se dice"
+          jq -nc '{text:"¿Cómo se dice gracias?",hsk_level:1}' > a4.json
+          ask a4.json "texto compartido «¿Cómo se dice gracias?»"
+          grep -q '谢' <(echo "$RES") && echo "✅ da 谢谢" || { echo "❌ no da 谢谢"; false; }
           # Foto de un menú con texto chino, generada aquí mismo.
           sudo apt-get install -y -qq fonts-noto-cjk imagemagick > /dev/null
           FONT=$(fc-list :lang=zh file | grep -m1 -oE '/[^:]+NotoSansCJK[^:]*\.tt[cf]' || fc-list :lang=zh file | head -1 | cut -d: -f1)
