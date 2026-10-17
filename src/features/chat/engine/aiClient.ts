@@ -44,9 +44,10 @@ export interface PronunciationResult {
  * Sube la grabación (m4a en el móvil, webm en la web) al servicio de voz, que
  * la transcribe en mandarín y la compara con la frase esperada (si la hay).
  */
-export async function assessPronunciation(audioUri: string, expectedHanzi: string, authToken: string): Promise<PronunciationResult> {
+export async function assessPronunciation(audioUri: string, expectedHanzi: string, authToken: string, lang: 'zh' | 'auto' = 'zh'): Promise<PronunciationResult> {
   const form = new FormData();
   form.append('expected', expectedHanzi);
+  form.append('lang', lang);
   if (Platform.OS === 'web') {
     // En la web la grabación es una URL blob: hay que adjuntar el archivo real.
     const blob = await (await fetch(audioUri)).blob();
@@ -141,4 +142,32 @@ export async function sendFreeChat(
   }
   if (!res.ok) throw new TutorUnavailableError(`chat ${res.status}`);
   return (await res.json()) as FreeChatReply;
+}
+
+export interface AssistReply {
+  answer: string;
+  hanzi: string | null;
+  pinyin: string | null;
+  words: { hanzi: string; pinyin: string; es: string }[];
+}
+
+/** Bao Asistente: traducir, explicar un texto o una foto, revisar un mensaje. */
+export async function askAssistant(req: { question: string; text?: string; image?: string | null; hskLevel: number }): Promise<AssistReply> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), req.image ? 40_000 : 20_000);
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/v1/assist`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ question: req.question, text: req.text ?? '', image: req.image ?? null, hsk_level: req.hskLevel }),
+      signal: controller.signal,
+    });
+  } catch {
+    throw new TutorUnavailableError(controller.signal.aborted ? 'sin respuesta' : 'sin conexión');
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!res.ok) throw new TutorUnavailableError(`asistente ${res.status}`);
+  return (await res.json()) as AssistReply;
 }

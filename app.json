@@ -18,13 +18,13 @@
     "android": {
       "package": "app.pandago",
       "permissions": [
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "CAMERA"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#E8561F"
-      },
-      "edgeToEdgeEnabled": true
+      }
     },
     "plugins": [
       "expo-router",
@@ -43,7 +43,47 @@
         }
       ],
       "expo-font",
-      "./plugins/withReleaseSigning"
+      "./plugins/withReleaseSigning",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "PandaGO! usa la cámara para que Bao te explique carteles, menús y textos en chino.",
+          "photosPermission": "PandaGO! usa tus fotos para que Bao te explique textos en chino."
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Bao",
+              "label": "Bao · palabra del día",
+              "description": "Bao, tu racha, la palabra del día y el asistente a un toque",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "maxResizeWidth": "400dp",
+              "maxResizeHeight": "200dp",
+              "resizeMode": "horizontal|vertical",
+              "previewImage": "./assets/widget-preview.png",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "BaoMini",
+              "label": "Bao (pequeño)",
+              "description": "Toca a Bao y te escucha",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "previewImage": "./assets/widget-mini-preview.png",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ],
+      "./plugins/withBaoAssistant"
     ],
     "experiments": {
       "typedRoutes": true

@@ -26,7 +26,8 @@ export interface Tutor {
   name: string;
   turn: (req: TurnRequest) => Promise<TutorTurn>;
   /** Evaluación de pronunciación (opcional según el motor). */
-  assess?: (audio: ArrayBuffer, expectedHanzi: string) => Promise<PronunciationResult>;
+  /** `lang` «auto» reconoce cualquier idioma (asistente); por defecto, chino. */
+  assess?: (audio: ArrayBuffer, expectedHanzi: string, lang?: 'zh' | 'auto') => Promise<PronunciationResult>;
   /** Voz natural de Bao: frase china → audio mp3. */
   tts?: (text: string) => Promise<ArrayBuffer>;
   /** «Pregúntale a Bao»: duda libre sobre una frase, respondida en español. */

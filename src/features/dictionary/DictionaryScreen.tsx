@@ -10,7 +10,19 @@ import type { VocabItem } from '@/data/hsk/types';
 import { exitTo } from '@/lib/navigation';
 import { speakChinese } from '@/lib/speech';
 import { useProgressStore } from '@/store/useProgressStore';
-import { useWordsStore } from '@/store/useWordsStore';
+import { type CustomWord, useWordsStore } from '@/store/useWordsStore';
+import { tonesFromPinyin } from '@/features/chat/engine/tones';
+
+/** Las palabras guardadas desde Bao Asistente se tratan como del curso (nivel = el actual). */
+const customToVocab = (w: CustomWord): VocabItem => ({
+  id: w.id,
+  hanzi: w.hanzi,
+  pinyin: w.pinyin,
+  meaning: w.meaning,
+  tones: tonesFromPinyin(w.pinyin, [...w.hanzi].length),
+  level: 1,
+  note: 'Guardada desde Bao Asistente.',
+});
 import { useTheme } from '@/theme';
 import { isDue, nextReviewLabel } from './cards';
 import { Flashcards } from './Flashcards';
@@ -23,6 +35,7 @@ export function DictionaryScreen() {
   const { c, type, spacing, radius } = useTheme();
   const router = useRouter();
   const cards = useWordsStore((s) => s.cards);
+  const custom = useWordsStore((s) => s.custom);
   const completed = useProgressStore((s) => s.completedNodeIds);
   const [tab, setTab] = useState<Tab>('search');
   const [query, setQuery] = useState('');
@@ -39,8 +52,11 @@ export function DictionaryScreen() {
 
   const results = useMemo(() => (query.trim() ? searchVocab(query, VOCAB) : suggested.words), [query, suggested]);
   const mine = useMemo(
-    () => VOCAB.filter((v) => cards[v.id]).sort((a, b) => (cards[a.id]?.due ?? 0) - (cards[b.id]?.due ?? 0)),
-    [cards],
+    () =>
+      [...VOCAB, ...Object.values(custom).map(customToVocab)]
+        .filter((v) => cards[v.id])
+        .sort((a, b) => (cards[a.id]?.due ?? 0) - (cards[b.id]?.due ?? 0)),
+    [cards, custom],
   );
   const due = mine.filter((v) => cards[v.id] && isDue(cards[v.id]!, now));
 

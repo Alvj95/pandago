@@ -8,11 +8,12 @@ import { MAX_HEARTS, useProgressStore } from '@/store/useProgressStore';
 import { useTheme } from '@/theme';
 
 type Href =
-  | '/review' | '/free-chat' | '/challenge' | '/call' | '/pronunciation' | '/conversations' | '/tones' | '/shadowing' | '/sing'
+  | '/review' | '/free-chat' | '/assistant' | '/challenge' | '/call' | '/pronunciation' | '/conversations' | '/tones' | '/shadowing' | '/sing'
   | '/stories' | '/phrases' | '/characters' | '/exam' | '/dictionary';
 
 const ITEMS: { icon: string; label: string; href: Href }[] = [
   { icon: '💬', label: 'Chat Bao', href: '/free-chat' },
+  { icon: '🪄', label: 'Asistente', href: '/assistant' },
   { icon: '🧠', label: 'Repaso', href: '/review' },
   { icon: '⚡', label: 'Retos', href: '/challenge' },
   { icon: '📞', label: 'Llamada', href: '/call' },

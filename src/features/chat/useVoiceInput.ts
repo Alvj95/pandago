@@ -47,7 +47,9 @@ export function useVoiceInput() {
   };
 
   /** Termina, sube la grabación y devuelve lo que se entendió (comparado con `expected` si se da). */
-  const stop = async (expected = ''): Promise<VoiceResult> => {
+  /** `lang: 'auto'` (asistente) acepta español o chino. */
+  const stop = async (expected = '', opts: { lang?: 'zh' | 'auto' } = {}): Promise<VoiceResult> => {
+    const lang = opts.lang ?? 'zh';
     const seconds = (Date.now() - startedAt.current) / 1000;
     setRecording(false);
     try {
@@ -64,11 +66,11 @@ export function useVoiceInput() {
     }
     let result: PronunciationResult;
     try {
-      result = await assessPronunciation(recorder.uri ?? '', expected, await getAuthToken());
+      result = await assessPronunciation(recorder.uri ?? '', expected, await getAuthToken(), lang);
     } catch (err) {
       return { ok: false, level, message: `🎙️ El reconocimiento de voz no ha respondido (${err instanceof Error ? err.message : String(err)}). Puedes escribir tu respuesta.` };
     }
-    if (!/\p{Script=Han}/u.test(result.transcript)) {
+    if (lang === 'auto' ? !result.transcript.trim() : !/\p{Script=Han}/u.test(result.transcript)) {
       return { ok: false, level, message: `🙉 No he oído nada en chino${result.transcript.trim() ? ` (entendí «${result.transcript.trim().slice(0, 40)}»)` : ''}. Habla más cerca del micrófono y un poco más alto.` };
     }
     return { ok: true, result, level };

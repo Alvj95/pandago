@@ -96,32 +96,34 @@ export function createAssist(ai: Ai, textModels: string[], visionModels: string[
     const user = assistUserTurn(req);
     let lastError: unknown = null;
     if (req.image) {
+      const errors: string[] = [];
+      const llamaInput = { messages: [{ role: 'system', content: system }, { role: 'user', content: user }], image: req.image, max_tokens: 600 };
       for (const model of visionModels) {
+        const input = model.includes('llama-3.2')
+          ? llamaInput
+          : {
+              messages: [
+                { role: 'system', content: system },
+                { role: 'user', content: [{ type: 'text', text: user }, { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${req.image}` } }] },
+              ],
+              max_tokens: 600,
+            };
         try {
-          const input = model.includes('llama-3.2')
-            ? { messages: [{ role: 'system', content: system }, { role: 'user', content: user }], image: req.image, max_tokens: 600 }
-            : {
-                messages: [
-                  { role: 'system', content: system },
-                  { role: 'user', content: [{ type: 'text', text: user }, { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${req.image}` } }] },
-                ],
-                max_tokens: 600,
-              };
           return parse(await ai.run(model, input));
         } catch (err) {
-          lastError = err;
-          // Llama 3.2 Vision pide aceptar su licencia una vez por cuenta.
+          // Llama 3.2 Vision pide aceptar su licencia una vez por cuenta («agree»); la respuesta a eso es un «error».
           if (model.includes('llama-3.2') && /agree/i.test(String(err))) {
+            await ai.run(model, { prompt: 'agree' }).catch(() => undefined);
             try {
-              await ai.run(model, { prompt: 'agree' });
-              return parse(await ai.run(model, { messages: [{ role: 'system', content: system }, { role: 'user', content: user }], image: req.image, max_tokens: 600 }));
+              return parse(await ai.run(model, llamaInput));
             } catch (again) {
-              lastError = again;
+              err = again;
             }
           }
+          errors.push(`${model.split('/').pop()}: ${String(err).slice(0, 140)}`);
         }
       }
-      throw lastError instanceof Error ? lastError : new Error('asistente: sin respuesta (foto)');
+      throw new Error(`asistente (foto): ${errors.join(' | ')}`);
     }
     const messages = [
       { role: 'system', content: system },

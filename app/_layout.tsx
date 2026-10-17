@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -7,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts, Nunito_600SemiBold, Nunito_700Bold, Nunito_800ExtraBold, Nunito_900Black } from '@expo-google-fonts/nunito';
 import { NotoSansSC_700Bold } from '@expo-google-fonts/noto-sans-sc';
 import { ThemeProvider, useTheme } from '@/theme';
+import { updateWidgets } from '@/features/widget/updateWidgets';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -19,6 +21,7 @@ function ThemedStack() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="chat" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="lesson/[id]" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="assistant" options={{ presentation: 'transparentModal', animation: 'fade', contentStyle: { backgroundColor: 'transparent' } }} />
         <Stack.Screen name="free-chat" options={{ presentation: 'fullScreenModal', animation: 'slide_from_right' }} />
         <Stack.Screen name="today" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="settings" options={{ presentation: 'fullScreenModal', animation: 'slide_from_right' }} />
@@ -54,6 +57,15 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) void SplashScreen.hideAsync();
   }, [loaded]);
+
+  // Widgets de Bao al día (racha, palabra, cara) al abrir y al salir de la app.
+  useEffect(() => {
+    void updateWidgets();
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'background') void updateWidgets();
+    });
+    return () => sub.remove();
+  }, []);
 
   if (!loaded) return null;
 

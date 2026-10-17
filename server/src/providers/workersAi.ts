@@ -130,7 +130,7 @@ export function createWorkersAiTutor(
   return {
     name: `workers-ai:${models[0] ?? '?'}`,
     turn: (req) => withLevelGuard(call, req),
-    assess: async (audio, expected) => {
+    assess: async (audio, expected, lang = 'zh') => {
       if (audio.byteLength < 2000) throw new Error('audio vacío o demasiado corto');
       // Se prueban los reconocedores en orden: gana el primero que escriba caracteres
       // chinos (a veces Whisper devuelve pinyin o romanización en lugar de hanzi).
@@ -138,9 +138,10 @@ export function createWorkersAiTutor(
       let fallback: string | null = null;
       for (const model of asrModel.split(',').map((m) => m.trim()).filter(Boolean)) {
         try {
-          const out = (await ai.run(model, asrInput(model, audio))) as { text?: string };
+          const out = (await ai.run(model, asrInput(model, audio, lang))) as { text?: string };
           const text = str(out?.text).trim();
-          if (HAN.test(text)) return alignTranscript(text, expected);
+          // En modo «auto» (asistente) vale cualquier idioma; en chino, se prefiere el que escribe hanzi.
+          if (HAN.test(text) || (lang === 'auto' && text)) return alignTranscript(text, expected);
           fallback ??= text;
         } catch (err) {
           lastError = err;
@@ -228,9 +229,9 @@ function toBase64(buf: ArrayBuffer): string {
  * Cada reconocedor de Workers AI espera el audio de una forma: whisper-large-v3-turbo
  * en base64 (con el idioma fijado en chino); el whisper clásico, como lista de bytes.
  */
-export function asrInput(model: string, audio: ArrayBuffer): Record<string, unknown> {
+export function asrInput(model: string, audio: ArrayBuffer, lang: 'zh' | 'auto' = 'zh'): Record<string, unknown> {
   if (model.includes('large-v3-turbo')) {
-    return { audio: toBase64(audio), language: 'zh', task: 'transcribe' };
+    return { audio: toBase64(audio), ...(lang === 'zh' ? { language: 'zh' } : {}), task: 'transcribe' };
   }
   return { audio: [...new Uint8Array(audio)] };
 }

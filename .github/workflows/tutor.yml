@@ -146,8 +146,9 @@ jobs:
           ask a2.json "cómo se dice"
           # Foto de un menú con texto chino, generada aquí mismo.
           sudo apt-get install -y -qq fonts-noto-cjk imagemagick > /dev/null
-          FONT=$(fc-list :lang=zh family | grep -m1 -o 'Noto Sans CJK SC' || true)
-          convert -size 640x320 xc:'#FFF4DD' -font "${FONT:-Noto-Sans-CJK-SC}" -fill '#3A2010' -pointsize 46 \
+          FONT=$(fc-list :lang=zh file | grep -m1 -oE '/[^:]+NotoSansCJK[^:]*\.tt[cf]' || fc-list :lang=zh file | head -1 | cut -d: -f1)
+          echo "fuente: $FONT"
+          convert -size 640x320 xc:'#FFF4DD' -font "$FONT" -fill '#3A2010' -pointsize 46 \
             -annotate +40+80 '菜单' -annotate +40+160 '宫保鸡丁  ¥38' -annotate +40+240 '饺子  ¥22' menu.jpg
           jq -nc --arg img "$(base64 -w0 menu.jpg)" '{image:$img,question:"¿Qué pone en este menú?",hsk_level:1}' > a3.json
           ask a3.json "foto de un menú"
