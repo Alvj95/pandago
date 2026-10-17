@@ -21,18 +21,20 @@ describe('Bao Asistente', () => {
     assert.throws(() => coerceAssist({}));
   });
 
-  it('usa el modelo de visión para las fotos y el de texto para lo demás', async () => {
+  it('foto: la visión copia el texto y el chat lo explica; texto: solo el chat', async () => {
     const calls: string[] = [];
     const ai = {
       run: async (model: string, input: Record<string, unknown>) => {
         calls.push(`${model}:${JSON.stringify(input).includes('image_url') ? 'foto' : 'texto'}`);
+        if (model === 'vision') return { response: '菜单\n宫保鸡丁 ¥38' };
         return { response: '{"answer":"Es pollo Kung Pao.","hanzi":null,"pinyin":null,"words":[{"hanzi":"鸡","pinyin":"jī","es":"pollo"}]}' };
       },
     };
     const assist = createAssist(ai, ['chat'], ['vision']);
-    await assist({ question: '', text: '', image: 'x'.repeat(200), hsk_level: 1 });
+    const photo = await assist({ question: '', text: '', image: 'x'.repeat(200), hsk_level: 1 });
+    assert.equal(photo.read, '菜单\n宫保鸡丁 ¥38'); // el texto leído pasa al modelo de chat
     await assist({ question: '¿cómo se dice gracias?', text: '', image: null, hsk_level: 1 });
-    assert.deepEqual(calls, ['vision:foto', 'chat:texto']);
+    assert.deepEqual(calls, ['vision:foto', 'chat:texto', 'chat:texto']);
     const app = createApp(() => ({ name: 'x', turn: async () => Promise.reject(new Error('no')), assist }));
     const res = await app.request('/v1/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ question: 'hola' }) });
     assert.equal(res.status, 200);

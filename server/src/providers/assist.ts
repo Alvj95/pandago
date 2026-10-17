@@ -30,6 +30,9 @@ export interface AssistReply {
   pinyin: string | null;
   /** Palabras clave para guardar. */
   words: AssistWord[];
+  /** Texto que se leyó en la foto y modelo que lo leyó (solo con foto). */
+  read?: string;
+  model?: string;
 }
 
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
@@ -89,55 +92,69 @@ const parse = (out: unknown) => {
   return coerceAssist(typeof res === 'string' ? extractJson(res) : res);
 };
 
-/** Texto con los modelos de chat; foto con los modelos de visión (Gemma 3 y, si falla, Llama 3.2 Vision). */
+/** Texto: modelos de chat. Foto: un modelo de visión copia el texto y el de chat lo explica. */
 export function createAssist(ai: Ai, textModels: string[], visionModels: string[]) {
-  return async (req: AssistRequest): Promise<AssistReply> => {
-    const system = assistSystemPrompt(req.hsk_level);
-    const user = assistUserTurn(req);
-    let lastError: unknown = null;
+  return async (input: AssistRequest): Promise<AssistReply> => {
+    let req = input;
     if (req.image) {
-      const errors: string[] = [];
-      const llamaInput = { messages: [{ role: 'system', content: system }, { role: 'user', content: user }], image: req.image, max_tokens: 600 };
-      for (const model of visionModels) {
-        const input = model.includes('llama-3.2')
-          ? llamaInput
-          : {
-              messages: [
-                { role: 'system', content: system },
-                { role: 'user', content: [{ type: 'text', text: user }, { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${req.image}` } }] },
-              ],
-              max_tokens: 600,
-            };
-        try {
-          return parse(await ai.run(model, input));
-        } catch (err) {
-          // Llama 3.2 Vision pide aceptar su licencia una vez por cuenta («agree»); la respuesta a eso es un «error».
-          if (model.includes('llama-3.2') && /agree/i.test(String(err))) {
-            await ai.run(model, { prompt: 'agree' }).catch(() => undefined);
-            try {
-              return parse(await ai.run(model, llamaInput));
-            } catch (again) {
-              err = again;
-            }
-          }
-          errors.push(`${model.split('/').pop()}: ${String(err).slice(0, 140)}`);
-        }
-      }
-      throw new Error(`asistente (foto): ${errors.join(' | ')}`);
+      // Paso 1: el modelo de visión solo copia el texto chino de la foto (es lo que mejor hace).
+      const ocr = await readImageText(ai, visionModels, req.image);
+      // Paso 2: el modelo de texto lo explica, como si lo hubieras pegado.
+      req = { ...req, image: null, text: [req.text, ocr.text].filter(Boolean).join('\n'), question: req.question || '¿Qué pone en esta foto?' };
+      const reply = await answerText(ai, textModels, req);
+      return { ...reply, read: ocr.text, model: ocr.model };
     }
-    const messages = [
-      { role: 'system', content: system },
-      { role: 'user', content: user },
-    ];
-    for (const model of textModels) {
-      for (const response_format of [{ type: 'json_object' }, undefined]) {
-        try {
-          return parse(await ai.run(model, { messages, max_tokens: 600, temperature: 0.3, ...(response_format ? { response_format } : {}) }));
-        } catch (err) {
-          lastError = err;
-        }
-      }
-    }
-    throw lastError instanceof Error ? lastError : new Error('asistente: sin respuesta');
+    return answerText(ai, textModels, req);
   };
+}
+
+const OCR_PROMPT =
+  'Copia EXACTAMENTE todo el texto en chino que se ve en la imagen, línea por línea, con los números y precios. No traduzcas ni expliques nada. Si no hay texto chino, responde NINGUNO.';
+
+/** Lee el texto chino de una foto probando varios modelos de visión. */
+export async function readImageText(ai: Ai, visionModels: string[], image: string): Promise<{ text: string; model: string }> {
+  const errors: string[] = [];
+  const dataUrl = `data:image/jpeg;base64,${image}`;
+  for (const model of visionModels) {
+    const input = model.includes('llama-3.2')
+      ? { messages: [{ role: 'user', content: OCR_PROMPT }], image, max_tokens: 400 }
+      : { messages: [{ role: 'user', content: [{ type: 'text', text: OCR_PROMPT }, { type: 'image_url', image_url: { url: dataUrl } }] }], max_tokens: 400 };
+    try {
+      let out: unknown;
+      try {
+        out = await ai.run(model, input);
+      } catch (err) {
+        // Llama 3.2 Vision pide aceptar su licencia una vez por cuenta («agree»).
+        if (!(model.includes('llama-3.2') && /agree/i.test(String(err)))) throw err;
+        await ai.run(model, { prompt: 'agree' }).catch(() => undefined);
+        out = await ai.run(model, input);
+      }
+      const text = str((out as { response?: unknown } | null)?.response ?? out).replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+      if (HAN.test(text)) return { text: text.slice(0, 1500), model: model.split('/').pop() ?? model };
+      errors.push(`${model.split('/').pop()}: sin texto chino`);
+    } catch (err) {
+      errors.push(`${model.split('/').pop()}: ${String(err).slice(0, 140)}`);
+    }
+  }
+  throw new Error(`asistente (foto): ${errors.join(' | ')}`);
+}
+
+async function answerText(ai: Ai, textModels: string[], req: AssistRequest): Promise<AssistReply> {
+  const system = assistSystemPrompt(req.hsk_level);
+  const user = assistUserTurn(req);
+  let lastError: unknown = null;
+  const messages = [
+    { role: 'system', content: system },
+    { role: 'user', content: user },
+  ];
+  for (const model of textModels) {
+    for (const response_format of [{ type: 'json_object' }, undefined]) {
+      try {
+        return parse(await ai.run(model, { messages, max_tokens: 600, temperature: 0.3, ...(response_format ? { response_format } : {}) }));
+      } catch (err) {
+        lastError = err;
+      }
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('asistente: sin respuesta');
 }

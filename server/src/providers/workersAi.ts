@@ -105,7 +105,7 @@ export function createWorkersAiTutor(
   asrModel: string,
   ttsModel = '@cf/myshell-ai/melotts',
   chatModels = models,
-  visionModels = ['@cf/google/gemma-3-12b-it', '@cf/meta/llama-3.2-11b-vision-instruct'],
+  visionModels = ['@cf/meta/llama-4-scout-17b-16e-instruct', '@cf/mistralai/mistral-small-3.1-24b-instruct', '@cf/google/gemma-3-12b-it', '@cf/meta/llama-3.2-11b-vision-instruct'],
 ): Tutor {
   const call = async (req: TurnRequest, extra?: string) => {
     const messages = [

@@ -149,6 +149,8 @@ export interface AssistReply {
   hanzi: string | null;
   pinyin: string | null;
   words: { hanzi: string; pinyin: string; es: string }[];
+  /** Texto chino que Bao leyó en la foto. */
+  read?: string;
 }
 
 /** Bao Asistente: traducir, explicar un texto o una foto, revisar un mensaje. */

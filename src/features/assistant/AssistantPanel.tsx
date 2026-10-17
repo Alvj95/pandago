@@ -267,6 +267,11 @@ function ReplyCard({ reply }: { reply: AssistReply }) {
   const [copied, setCopied] = useState(false);
   return (
     <View style={[styles.reply, { backgroundColor: c.surfaceSunken, borderRadius: radius.md, gap: 6, padding: spacing.sm }]}>
+      {reply.read ? (
+        <Text style={[type.caption, { color: c.textSecondary }]} numberOfLines={4}>
+          👀 Bao leyó: {reply.read}
+        </Text>
+      ) : null}
       {reply.hanzi ? (
         <View>
           <Text style={[type.hanzi, { fontSize: 21, lineHeight: 28, color: c.textPrimary }]}>{reply.hanzi}</Text>
