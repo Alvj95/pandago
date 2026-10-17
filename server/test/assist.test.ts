@@ -36,11 +36,24 @@ describe('Bao Asistente', () => {
     const assist = createAssist(ai, ['chat'], ['vision']);
     const photo = await assist({ question: '', text: '', image: 'x'.repeat(200), hsk_level: 1 });
     assert.equal(photo.read, '菜单\n宫保鸡丁 ¥38'); // el texto leído pasa al modelo de chat
-    await assist({ question: '¿cómo se dice gracias?', text: '', image: null, hsk_level: 1 });
+    await assist({ question: '¿qué tal?', text: '', image: null, hsk_level: 1 });
     assert.deepEqual(calls, ['vision:foto', 'chat:texto', 'chat:texto']);
     const app = createApp(() => ({ name: 'x', turn: async () => Promise.reject(new Error('no')), assist }));
     const res = await app.request('/v1/assist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ question: 'hola' }) });
     assert.equal(res.status, 200);
     assert.equal((await app.request('/v1/assist', { method: 'POST', body: '{}' })).status, 400);
+  });
+
+  it('al traducir, si un modelo no da la frase en chino prueba el siguiente', async () => {
+    const ai = {
+      run: async (model: string) =>
+        model === 'llama'
+          ? { response: '{"answer":"Se dice xièxie.","hanzi":null}' }
+          : { response: '{"answer":"Se dice 谢谢.","hanzi":"谢谢","pinyin":"xièxie","words":[]}' },
+    };
+    const reply = await createAssist(ai, ['llama', 'qwen'], [])({ question: '', text: '¿Cómo se dice gracias?', image: null, hsk_level: 1 });
+    assert.equal(reply.hanzi, '谢谢');
+    const only = await createAssist(ai, ['llama'], [])({ question: '¿Cómo se dice gracias?', text: '', image: null, hsk_level: 1 });
+    assert.equal(only.answer, 'Se dice xièxie.'); // sin alternativa, mejor algo que nada
   });
 });

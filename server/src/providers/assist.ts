@@ -141,22 +141,38 @@ export async function readImageText(ai: Ai, visionModels: string[], image: strin
   throw new Error(`asistente (foto): ${errors.join(' | ')}`);
 }
 
+/** Preguntas cuya respuesta tiene que traer la frase en chino. */
+export const wantsChinese = (req: AssistRequest) =>
+  /c[oó]mo (se )?(dice|digo|le digo|pregunto|pido|escribe|traduce)|en chino|tradu[cz]/i.test(req.question);
+
+/** Ejemplos para que el modelo rellene siempre "hanzi" al traducir. */
+const EXAMPLES = [
+  { role: 'user', content: 'Mi pregunta: ¿Cómo se dice «buenas noches»? /no_think' },
+  {
+    role: 'assistant',
+    content: JSON.stringify({ answer: 'Se dice 晚安 (wǎn\'ān). Se usa al irse a dormir.', hanzi: '晚安', pinyin: "wǎn'ān", words: [{ hanzi: '晚安', pinyin: "wǎn'ān", es: 'buenas noches' }] }),
+  },
+];
+
 async function answerText(ai: Ai, textModels: string[], req: AssistRequest): Promise<AssistReply> {
   const system = assistSystemPrompt(req.hsk_level);
   const user = assistUserTurn(req);
+  const needHanzi = wantsChinese(req.question ? req : { ...req, question: req.text });
   let lastError: unknown = null;
-  const messages = [
-    { role: 'system', content: system },
-    { role: 'user', content: user },
-  ];
+  let partial: AssistReply | null = null;
+  const messages = [{ role: 'system', content: system }, ...EXAMPLES, { role: 'user', content: user }];
   for (const model of textModels) {
     for (const response_format of [{ type: 'json_object' }, undefined]) {
       try {
-        return parse(await ai.run(model, { messages, max_tokens: 600, temperature: 0.3, ...(response_format ? { response_format } : {}) }));
+        const reply = parse(await ai.run(model, { messages, max_tokens: 600, temperature: 0.3, ...(response_format ? { response_format } : {}) }));
+        // Al traducir, una respuesta sin la frase en chino vale solo como último recurso.
+        if (!needHanzi || reply.hanzi) return reply;
+        partial ??= reply;
       } catch (err) {
         lastError = err;
       }
     }
   }
+  if (partial) return partial;
   throw lastError instanceof Error ? lastError : new Error('asistente: sin respuesta');
 }
